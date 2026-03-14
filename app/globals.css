@@ -1,26 +1,137 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* =========================
+   إعدادات عامة
+========================= */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.25);
+  color: #0f172a;
+}
+
+/* =========================
+   خلفية الرموز المتحركة
+========================= */
+
+.rise {
+  position: absolute;
+  bottom: -80px;
+  z-index: 0;
+  opacity: 0.22;
+  font-size: 40px;
+  animation-name: riseUp;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  user-select: none;
+}
+
+.rise-1 { left: 4%; animation-duration: 14s; animation-delay: 0s; }
+.rise-2 { left: 11%; animation-duration: 18s; animation-delay: 2s; font-size: 32px; }
+.rise-3 { left: 18%; animation-duration: 16s; animation-delay: 4s; }
+.rise-4 { left: 26%; animation-duration: 20s; animation-delay: 1s; font-size: 46px; }
+.rise-5 { left: 34%; animation-duration: 15s; animation-delay: 5s; }
+.rise-6 { left: 42%; animation-duration: 19s; animation-delay: 3s; font-size: 36px; }
+.rise-7 { left: 50%; animation-duration: 17s; animation-delay: 6s; }
+.rise-8 { left: 58%; animation-duration: 21s; animation-delay: 2s; }
+.rise-9 { left: 66%; animation-duration: 15s; animation-delay: 7s; font-size: 38px; }
+.rise-10 { left: 74%; animation-duration: 18s; animation-delay: 4s; }
+.rise-11 { left: 82%; animation-duration: 16s; animation-delay: 1s; }
+.rise-12 { left: 89%; animation-duration: 20s; animation-delay: 5s; font-size: 34px; }
+.rise-13 { left: 22%; animation-duration: 17s; animation-delay: 8s; }
+.rise-14 { left: 70%; animation-duration: 19s; animation-delay: 9s; }
+
+@keyframes riseUp {
+  0% {
+    transform: translateY(0) scale(0.9) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: translateY(-45vh) scale(1) rotate(6deg);
+    opacity: 0.26;
+  }
+
+  100% {
+    transform: translateY(-110vh) scale(1.1) rotate(-8deg);
+    opacity: 0;
+  }
+}
+
+/* =========================
+   بطاقات ناعمة
+========================= */
+
+.card-soft {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.05);
+  border-radius: 24px;
+}
+
+/* =========================
+   تأثير دخول الأقسام
+========================= */
+
+.fade-up {
+  animation: fadeUp 0.8s ease forwards;
+}
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   تحسينات أزرار
+========================= */
+
+button,
+a {
+  transition: all 0.25s ease;
+}
+
+button:hover,
+a:hover {
+  transform: translateY(-2px);
+}
+
+/* =========================
+   شاشات الجوال
+========================= */
+
+@media (max-width: 768px) {
+  .rise {
+    font-size: 28px;
+    opacity: 0.18;
+  }
 }
