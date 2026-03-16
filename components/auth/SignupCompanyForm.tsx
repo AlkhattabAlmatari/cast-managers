@@ -54,6 +54,9 @@ export default function SignupCompanyForm() {
           email: user.email || "",
           photoURL: user.photoURL || "",
           status: "pending",
+          subscriptionStatus: "inactive",
+          subscriptionPlan: "none",
+          verified: false,
           createdAt: new Date().toISOString(),
         },
         { merge: true }
