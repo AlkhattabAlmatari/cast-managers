@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "firebase": "^12.10.0",
-    "framer-motion": "^12.36.0",
+    "framer-motion": "^12.37.0",
+    "git": "^0.1.5",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "status": "^0.0.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
