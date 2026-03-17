@@ -15,11 +15,20 @@ export default function SignupUserForm() {
   const [ageRange, setAgeRange] = useState("");
   const [gender, setGender] = useState("");
   const [nationality, setNationality] = useState("");
+  const [category, setCategory] = useState("");
   const [experience, setExperience] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignup = async () => {
-    if (!fullName || !phone || !city || !ageRange || !gender || !nationality) {
+    if (
+      !fullName ||
+      !phone ||
+      !city ||
+      !ageRange ||
+      !gender ||
+      !nationality ||
+      !category
+    ) {
       alert("أكمل جميع البيانات المطلوبة أولاً");
       return;
     }
@@ -52,6 +61,7 @@ export default function SignupUserForm() {
           ageRange,
           gender,
           nationality,
+          category,
           experience,
           email: user.email || "",
           photoURL: user.photoURL || "",
@@ -105,13 +115,30 @@ export default function SignupUserForm() {
           onChange={(e) => setCity(e.target.value)}
         >
           <option value="">اختر المدينة</option>
-          <option>الرياض</option>
-          <option>جدة</option>
-          <option>الدمام</option>
-          <option>الخبر</option>
-          <option>مكة المكرمة</option>
-          <option>المدينة المنورة</option>
-          <option>الطائف</option>
+          <option value="الرياض">الرياض</option>
+          <option value="جدة">جدة</option>
+          <option value="مكة المكرمة">مكة المكرمة</option>
+          <option value="المدينة المنورة">المدينة المنورة</option>
+          <option value="الدمام">الدمام</option>
+          <option value="الخبر">الخبر</option>
+          <option value="الظهران">الظهران</option>
+          <option value="الطائف">الطائف</option>
+          <option value="أبها">أبها</option>
+          <option value="خميس مشيط">خميس مشيط</option>
+          <option value="تبوك">تبوك</option>
+          <option value="حائل">حائل</option>
+          <option value="بريدة">بريدة</option>
+          <option value="عنيزة">عنيزة</option>
+          <option value="الجبيل">الجبيل</option>
+          <option value="ينبع">ينبع</option>
+          <option value="نجران">نجران</option>
+          <option value="جازان">جازان</option>
+          <option value="الأحساء">الأحساء</option>
+          <option value="القطيف">القطيف</option>
+          <option value="الخرج">الخرج</option>
+          <option value="الباحة">الباحة</option>
+          <option value="سكاكا">سكاكا</option>
+          <option value="عرعر">عرعر</option>
         </select>
 
         <select
@@ -142,6 +169,24 @@ export default function SignupUserForm() {
           value={nationality}
           onChange={(e) => setNationality(e.target.value)}
         />
+
+        <select
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">اختر الفئة</option>
+          <option value="ممثل">ممثل</option>
+          <option value="مقدم">مقدم</option>
+          <option value="موديل">موديل</option>
+          <option value="منظم فعاليات">منظم فعاليات</option>
+          <option value="كومبارس">كومبارس</option>
+          <option value="بروموتر / معلن">بروموتر / معلن</option>
+          <option value="صانع محتوى">صانع محتوى</option>
+          <option value="مذيع">مذيع</option>
+          <option value="مضيف / مضيفة فعاليات">مضيف / مضيفة فعاليات</option>
+          <option value="فوتوجينيك / إعلان">فوتوجينيك / إعلان</option>
+        </select>
 
         <textarea
           className="min-h-28 w-full rounded-2xl border border-slate-300 px-4 py-3"

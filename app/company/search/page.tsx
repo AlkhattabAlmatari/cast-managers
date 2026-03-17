@@ -17,8 +17,49 @@ type UserTalent = {
   gender?: string;
   nationality?: string;
   experience?: string;
+  category?: string;
   photoURL?: string;
 };
+
+const saudiCities = [
+  "الرياض",
+  "جدة",
+  "مكة المكرمة",
+  "المدينة المنورة",
+  "الدمام",
+  "الخبر",
+  "الظهران",
+  "الطائف",
+  "أبها",
+  "خميس مشيط",
+  "تبوك",
+  "حائل",
+  "بريدة",
+  "عنيزة",
+  "الجبيل",
+  "ينبع",
+  "نجران",
+  "جازان",
+  "الأحساء",
+  "القطيف",
+  "الخرج",
+  "الباحة",
+  "سكاكا",
+  "عرعر",
+];
+
+const categories = [
+  "ممثل",
+  "مقدم",
+  "موديل",
+  "منظم فعاليات",
+  "كومبارس",
+  "بروموتر / معلن",
+  "صانع محتوى",
+  "مذيع",
+  "مضيف / مضيفة فعاليات",
+  "فوتوجينيك / إعلان",
+];
 
 export default function CompanySearchPage() {
   const router = useRouter();
@@ -27,7 +68,8 @@ export default function CompanySearchPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [users, setUsers] = useState<UserTalent[]>([]);
 
-  const [searchText, setSearchText] = useState("");
+  const [nameSearch, setNameSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState("");
   const [ageFilter, setAgeFilter] = useState("");
@@ -71,6 +113,7 @@ export default function CompanySearchPage() {
               gender: data.gender || "",
               nationality: data.nationality || "",
               experience: data.experience || "",
+              category: data.category || "",
               photoURL: data.photoURL || "",
             };
           });
@@ -87,28 +130,34 @@ export default function CompanySearchPage() {
     return () => unsub();
   }, [router]);
 
-  // 🔍 فلترة البحث
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      const matchesText =
-        !searchText ||
-        user.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
-        user.experience?.toLowerCase().includes(searchText.toLowerCase());
+      const matchesName =
+        !nameSearch ||
+        user.fullName?.toLowerCase().includes(nameSearch.toLowerCase());
 
-      const matchesCity = !cityFilter || user.city === cityFilter;
-      const matchesGender = !genderFilter || user.gender === genderFilter;
-      const matchesAge = !ageFilter || user.ageRange === ageFilter;
+      const matchesCategory =
+        !categoryFilter || user.category === categoryFilter;
+
+      const matchesCity =
+        !cityFilter || user.city === cityFilter;
+
+      const matchesGender =
+        !genderFilter || user.gender === genderFilter;
+
+      const matchesAge =
+        !ageFilter || user.ageRange === ageFilter;
 
       return (
-        matchesText &&
+        matchesName &&
+        matchesCategory &&
         matchesCity &&
         matchesGender &&
         matchesAge
       );
     });
-  }, [users, searchText, cityFilter, genderFilter, ageFilter]);
+  }, [users, nameSearch, categoryFilter, cityFilter, genderFilter, ageFilter]);
 
-  // ⏳ تحميل
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-100">
@@ -120,22 +169,19 @@ export default function CompanySearchPage() {
     );
   }
 
-  // 🔒 إذا غير مشترك
   if (!subscribed) {
     return (
       <main className="min-h-screen bg-slate-100">
         <Navbar />
         <section className="mx-auto max-w-4xl px-6 py-14 text-center">
-          <h1 className="text-3xl font-black mb-4">
-            البحث غير متاح
-          </h1>
-          <p className="text-slate-600 mb-6">
+          <h1 className="mb-4 text-3xl font-black">البحث غير متاح</h1>
+          <p className="mb-6 text-slate-600">
             يجب الاشتراك لتفعيل البحث عن المواهب
           </p>
 
           <button
             onClick={() => router.push("/company/subscription")}
-            className="bg-black text-white px-6 py-3 rounded-xl"
+            className="rounded-xl bg-black px-6 py-3 text-white"
           >
             الاشتراك الآن
           </button>
@@ -144,41 +190,53 @@ export default function CompanySearchPage() {
     );
   }
 
-  // ✅ الصفحة الأساسية
   return (
     <main className="min-h-screen bg-slate-100">
       <Navbar />
 
       <section className="mx-auto max-w-7xl px-6 py-10">
-        <h1 className="text-3xl font-black mb-6">
-          البحث عن المواهب
-        </h1>
+        <h1 className="mb-6 text-3xl font-black">البحث عن المواهب</h1>
 
-        {/* الفلاتر */}
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-8">
+        <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <input
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="بحث بالاسم أو الخبرة"
-            className="border p-3 rounded-xl"
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+            placeholder="ابحث بالاسم"
+            className="rounded-xl border p-3"
           />
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="rounded-xl border p-3"
+          >
+            <option value="">كل الفئات</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
 
           <select
             value={cityFilter}
             onChange={(e) => setCityFilter(e.target.value)}
-            className="border p-3 rounded-xl"
+            className="rounded-xl border p-3"
           >
             <option value="">كل المدن</option>
-            <option value="الرياض">الرياض</option>
-            <option value="جدة">جدة</option>
+            {saudiCities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
           </select>
 
           <select
             value={genderFilter}
             onChange={(e) => setGenderFilter(e.target.value)}
-            className="border p-3 rounded-xl"
+            className="rounded-xl border p-3"
           >
-            <option value="">الجنس</option>
+            <option value="">كل الأجناس</option>
             <option value="ذكر">ذكر</option>
             <option value="أنثى">أنثى</option>
           </select>
@@ -186,38 +244,40 @@ export default function CompanySearchPage() {
           <select
             value={ageFilter}
             onChange={(e) => setAgeFilter(e.target.value)}
-            className="border p-3 rounded-xl"
+            className="rounded-xl border p-3"
           >
-            <option value="">العمر</option>
-            <option value="18-25">18-25</option>
-            <option value="25-30">25-30</option>
+            <option value="">كل الأعمار</option>
+            <option value="18-25">18 - 25</option>
+            <option value="25-30">25 - 30</option>
+            <option value="30-40">30 - 40</option>
+            <option value="40+">40+</option>
           </select>
         </div>
 
-        {/* النتائج */}
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {filteredUsers.length > 0 ? (
             filteredUsers.map((user) => (
               <div
                 key={user.id}
-                className="bg-white p-6 rounded-2xl shadow"
+                className="rounded-2xl bg-white p-6 shadow"
               >
                 <h2 className="text-xl font-bold">
                   {user.fullName || "مستخدم"}
                 </h2>
 
-                <p className="mt-2">📍 {user.city || "غير محدد"}</p>
+                <p className="mt-2">📂 {user.category || "غير محدد"}</p>
+                <p>📍 {user.city || "غير محدد"}</p>
                 <p>👤 {user.gender || "-"}</p>
                 <p>🎂 {user.ageRange || "-"}</p>
 
                 <div className="mt-4">
-                  <p className="text-sm text-gray-500">الخبرة</p>
+                  <p className="text-sm text-gray-500">الخبرة / النبذة</p>
                   <p>{user.experience || "لا يوجد"}</p>
                 </div>
 
                 <div className="mt-4 text-sm">
-                  <p>{user.email}</p>
-                  <p>{user.phone}</p>
+                  <p>{user.email || "لا يوجد بريد"}</p>
+                  <p>{user.phone || "لا يوجد رقم"}</p>
                 </div>
               </div>
             ))
