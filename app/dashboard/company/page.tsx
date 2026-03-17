@@ -9,13 +9,12 @@ import { auth, db } from "@/lib/firebase";
 
 type CompanyData = {
   companyName?: string;
-  contactName?: string;
+  managerName?: string;
   phone?: string;
   city?: string;
-  sector?: string;
-  commercialRegistration?: string;
+  record?: string;
   email?: string;
-  status?: string;
+  subscription?: string;
   subscriptionStatus?: string;
   subscriptionPlan?: string;
 };
@@ -55,7 +54,9 @@ export default function CompanyDashboardPage() {
     );
   }
 
-  const isSubscribed = companyData?.subscriptionStatus === "active";
+  const isSubscribed =
+    companyData?.subscriptionStatus === "active" ||
+    companyData?.subscriptionPlan === "pro";
 
   return (
     <main className="min-h-screen bg-slate-100">
@@ -69,23 +70,23 @@ export default function CompanyDashboardPage() {
               {companyData?.companyName || "حساب الشركة"}
             </h1>
             <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-              من هنا تقدر تتابع حالة اشتراكك، جاهزية الحساب، وتفعيل البحث عن
-              المواهب داخل المنصة.
+              من هنا تقدر تتابع حالة الاشتراك، تعدل بيانات الشركة، وتبدأ في البحث
+              عن المواهب بعد التفعيل.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={isSubscribed ? "/company/search" : "/company/subscription"}
-                className="rounded-2xl bg-slate-950 px-5 py-3 font-bold text-white hover:bg-slate-800"
-              >
-                {isSubscribed ? "البحث عن المواهب" : "تفعيل الاشتراك"}
-              </Link>
-
               <Link
                 href="/company/profile/edit"
                 className="rounded-2xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-900 hover:bg-slate-50"
               >
                 تعديل بيانات الشركة
+              </Link>
+
+              <Link
+                href={isSubscribed ? "/company/search" : "/company/subscription"}
+                className="rounded-2xl bg-slate-950 px-5 py-3 font-bold text-white hover:bg-slate-800"
+              >
+                {isSubscribed ? "فتح البحث عن المواهب" : "تفعيل الاشتراك"}
               </Link>
             </div>
           </div>
@@ -98,17 +99,17 @@ export default function CompanyDashboardPage() {
 
             <p className="mt-4 leading-7 text-slate-600">
               {isSubscribed
-                ? "اشتراكك مفعل ويمكنك استخدام ميزة البحث عن المواهب."
-                : "يلزم تفعيل الاشتراك لاستخدام البحث والوصول إلى ملفات المواهب."}
+                ? "يمكنك الآن استخدام البحث عن المواهب."
+                : "الاشتراك مطلوب لتفعيل البحث عن المواهب داخل المنصة."}
             </p>
           </div>
         </div>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <StatCard title="حالة الحساب" value="نشط" />
-          <StatCard title="التوثيق" value={companyData?.status || "pending"} />
-          <StatCard title="الاشتراك" value={companyData?.subscriptionPlan || "none"} />
-          <StatCard title="البحث" value={isSubscribed ? "مفتوح" : "مغلق"} />
+          <StatCard title="الاشتراك" value={companyData?.subscription || "غير مفعل"} />
+          <StatCard title="حالة البحث" value={isSubscribed ? "مفتوح" : "مغلق"} />
+          <StatCard title="المدينة" value={companyData?.city || "غير مضافة"} />
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -117,19 +118,11 @@ export default function CompanyDashboardPage() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <InfoCard label="اسم الشركة" value={companyData?.companyName} />
-              <InfoCard label="اسم المسؤول" value={companyData?.contactName} />
+              <InfoCard label="اسم المسؤول" value={companyData?.managerName} />
               <InfoCard label="البريد الإلكتروني" value={companyData?.email} />
               <InfoCard label="رقم الجوال" value={companyData?.phone} />
               <InfoCard label="المدينة" value={companyData?.city} />
-              <InfoCard label="القطاع" value={companyData?.sector} />
-              <InfoCard
-                label="السجل التجاري"
-                value={companyData?.commercialRegistration}
-              />
-              <InfoCard
-                label="حالة الاشتراك"
-                value={companyData?.subscriptionStatus || "inactive"}
-              />
+              <InfoCard label="السجل التجاري" value={companyData?.record} />
             </div>
           </div>
 
@@ -137,21 +130,10 @@ export default function CompanyDashboardPage() {
             <h2 className="text-2xl font-black text-slate-950">إجراءات سريعة</h2>
 
             <div className="mt-6 space-y-3">
-              <QuickLink
-                href={isSubscribed ? "/company/search" : "/company/subscription"}
-                label={isSubscribed ? "فتح البحث عن المواهب" : "تفعيل الاشتراك"}
-              />
               <QuickLink href="/company/profile/edit" label="تعديل بيانات الشركة" />
+              <QuickLink href="/company/subscription" label="صفحة الاشتراك" />
+              <QuickLink href="/company/search" label="البحث عن المواهب" />
             </div>
-
-            {!isSubscribed && (
-              <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                <p className="text-sm font-bold text-amber-700">تنبيه</p>
-                <p className="mt-3 leading-7 text-amber-900">
-                  لا يمكنك استخدام البحث عن المواهب حتى يتم تفعيل الاشتراك.
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </section>
