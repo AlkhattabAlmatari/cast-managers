@@ -68,11 +68,22 @@ export default function CompanySearchPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [users, setUsers] = useState<UserTalent[]>([]);
 
-  const [nameSearch, setNameSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [cityFilter, setCityFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState("");
-  const [ageFilter, setAgeFilter] = useState("");
+  // القيم داخل الحقول
+  const [nameInput, setNameInput] = useState("");
+  const [categoryInput, setCategoryInput] = useState("");
+  const [cityInput, setCityInput] = useState("");
+  const [genderInput, setGenderInput] = useState("");
+  const [ageInput, setAgeInput] = useState("");
+
+  // القيم التي يتم البحث بها فعليًا بعد الضغط على زر البحث
+  const [searchName, setSearchName] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
+  const [searchCity, setSearchCity] = useState("");
+  const [searchGender, setSearchGender] = useState("");
+  const [searchAge, setSearchAge] = useState("");
+
+  // هل تم الضغط على بحث
+  const [searched, setSearched] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -130,23 +141,48 @@ export default function CompanySearchPage() {
     return () => unsub();
   }, [router]);
 
+  const handleSearch = () => {
+    setSearchName(nameInput);
+    setSearchCategory(categoryInput);
+    setSearchCity(cityInput);
+    setSearchGender(genderInput);
+    setSearchAge(ageInput);
+    setSearched(true);
+  };
+
+  const handleReset = () => {
+    setNameInput("");
+    setCategoryInput("");
+    setCityInput("");
+    setGenderInput("");
+    setAgeInput("");
+
+    setSearchName("");
+    setSearchCategory("");
+    setSearchCity("");
+    setSearchGender("");
+    setSearchAge("");
+
+    setSearched(false);
+  };
+
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const matchesName =
-        !nameSearch ||
-        user.fullName?.toLowerCase().includes(nameSearch.toLowerCase());
+        !searchName ||
+        user.fullName?.toLowerCase().includes(searchName.toLowerCase());
 
       const matchesCategory =
-        !categoryFilter || user.category === categoryFilter;
+        !searchCategory || user.category === searchCategory;
 
       const matchesCity =
-        !cityFilter || user.city === cityFilter;
+        !searchCity || user.city === searchCity;
 
       const matchesGender =
-        !genderFilter || user.gender === genderFilter;
+        !searchGender || user.gender === searchGender;
 
       const matchesAge =
-        !ageFilter || user.ageRange === ageFilter;
+        !searchAge || user.ageRange === searchAge;
 
       return (
         matchesName &&
@@ -156,7 +192,7 @@ export default function CompanySearchPage() {
         matchesAge
       );
     });
-  }, [users, nameSearch, categoryFilter, cityFilter, genderFilter, ageFilter]);
+  }, [users, searchName, searchCategory, searchCity, searchGender, searchAge]);
 
   if (loading) {
     return (
@@ -197,96 +233,120 @@ export default function CompanySearchPage() {
       <section className="mx-auto max-w-7xl px-6 py-10">
         <h1 className="mb-6 text-3xl font-black">البحث عن المواهب</h1>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <input
-            value={nameSearch}
-            onChange={(e) => setNameSearch(e.target.value)}
-            placeholder="ابحث بالاسم"
-            className="rounded-xl border p-3"
-          />
+        <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <input
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="ابحث بالاسم"
+              className="rounded-xl border p-3"
+            />
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="rounded-xl border p-3"
-          >
-            <option value="">كل الفئات</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            <select
+              value={categoryInput}
+              onChange={(e) => setCategoryInput(e.target.value)}
+              className="rounded-xl border p-3"
+            >
+              <option value="">كل الفئات</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
 
-          <select
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            className="rounded-xl border p-3"
-          >
-            <option value="">كل المدن</option>
-            {saudiCities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
+            <select
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+              className="rounded-xl border p-3"
+            >
+              <option value="">كل المدن</option>
+              {saudiCities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
 
-          <select
-            value={genderFilter}
-            onChange={(e) => setGenderFilter(e.target.value)}
-            className="rounded-xl border p-3"
-          >
-            <option value="">كل الأجناس</option>
-            <option value="ذكر">ذكر</option>
-            <option value="أنثى">أنثى</option>
-          </select>
+            <select
+              value={genderInput}
+              onChange={(e) => setGenderInput(e.target.value)}
+              className="rounded-xl border p-3"
+            >
+              <option value="">كل الأجناس</option>
+              <option value="ذكر">ذكر</option>
+              <option value="أنثى">أنثى</option>
+            </select>
 
-          <select
-            value={ageFilter}
-            onChange={(e) => setAgeFilter(e.target.value)}
-            className="rounded-xl border p-3"
-          >
-            <option value="">كل الأعمار</option>
-            <option value="18-25">18 - 25</option>
-            <option value="25-30">25 - 30</option>
-            <option value="30-40">30 - 40</option>
-            <option value="40+">40+</option>
-          </select>
+            <select
+              value={ageInput}
+              onChange={(e) => setAgeInput(e.target.value)}
+              className="rounded-xl border p-3"
+            >
+              <option value="">كل الأعمار</option>
+              <option value="18-25">18 - 25</option>
+              <option value="25-30">25 - 30</option>
+              <option value="30-40">30 - 40</option>
+              <option value="40+">40+</option>
+            </select>
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              onClick={handleSearch}
+              className="rounded-xl bg-slate-950 px-6 py-3 font-bold text-white hover:bg-slate-800"
+            >
+              بحث
+            </button>
+
+            <button
+              onClick={handleReset}
+              className="rounded-xl border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 hover:bg-slate-50"
+            >
+              إعادة تعيين
+            </button>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="rounded-2xl bg-white p-6 shadow"
-              >
-                <h2 className="text-xl font-bold">
-                  {user.fullName || "مستخدم"}
-                </h2>
+        {!searched ? (
+          <div className="rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm ring-1 ring-slate-200">
+            اختر الفلاتر التي تريدها ثم اضغط على زر <span className="font-bold">بحث</span>.
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <div
+                  key={user.id}
+                  className="rounded-2xl bg-white p-6 shadow"
+                >
+                  <h2 className="text-xl font-bold">
+                    {user.fullName || "مستخدم"}
+                  </h2>
 
-                <p className="mt-2">📂 {user.category || "غير محدد"}</p>
-                <p>📍 {user.city || "غير محدد"}</p>
-                <p>👤 {user.gender || "-"}</p>
-                <p>🎂 {user.ageRange || "-"}</p>
+                  <p className="mt-2">📂 {user.category || "غير محدد"}</p>
+                  <p>📍 {user.city || "غير محدد"}</p>
+                  <p>👤 {user.gender || "-"}</p>
+                  <p>🎂 {user.ageRange || "-"}</p>
 
-                <div className="mt-4">
-                  <p className="text-sm text-gray-500">الخبرة / النبذة</p>
-                  <p>{user.experience || "لا يوجد"}</p>
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-500">الخبرة / النبذة</p>
+                    <p>{user.experience || "لا يوجد"}</p>
+                  </div>
+
+                  <div className="mt-4 text-sm">
+                    <p>{user.email || "لا يوجد بريد"}</p>
+                    <p>{user.phone || "لا يوجد رقم"}</p>
+                  </div>
                 </div>
-
-                <div className="mt-4 text-sm">
-                  <p>{user.email || "لا يوجد بريد"}</p>
-                  <p>{user.phone || "لا يوجد رقم"}</p>
-                </div>
+              ))
+            ) : (
+              <div className="col-span-3 rounded-2xl bg-white p-8 text-center text-gray-500 shadow-sm ring-1 ring-slate-200">
+                لا يوجد نتائج مطابقة
               </div>
-            ))
-          ) : (
-            <div className="col-span-3 text-center text-gray-500">
-              لا يوجد نتائج
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </section>
     </main>
   );
