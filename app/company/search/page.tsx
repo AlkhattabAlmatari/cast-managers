@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -68,21 +69,18 @@ export default function CompanySearchPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [users, setUsers] = useState<UserTalent[]>([]);
 
-  // القيم داخل الحقول
   const [nameInput, setNameInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
   const [cityInput, setCityInput] = useState("");
   const [genderInput, setGenderInput] = useState("");
   const [ageInput, setAgeInput] = useState("");
 
-  // القيم التي يتم البحث بها فعليًا بعد الضغط على زر البحث
   const [searchName, setSearchName] = useState("");
   const [searchCategory, setSearchCategory] = useState("");
   const [searchCity, setSearchCity] = useState("");
   const [searchGender, setSearchGender] = useState("");
   const [searchAge, setSearchAge] = useState("");
 
-  // هل تم الضغط على بحث
   const [searched, setSearched] = useState(false);
 
   useEffect(() => {
@@ -101,7 +99,6 @@ export default function CompanySearchPage() {
         }
 
         const companyData = companySnap.data();
-
         const active =
           companyData.subscriptionStatus === "active" ||
           companyData.subscriptionPlan === "pro";
@@ -111,11 +108,11 @@ export default function CompanySearchPage() {
         if (active) {
           const usersSnap = await getDocs(collection(db, "users"));
 
-          const usersData: UserTalent[] = usersSnap.docs.map((doc) => {
-            const data = doc.data();
+          const usersData: UserTalent[] = usersSnap.docs.map((docItem) => {
+            const data = docItem.data();
 
             return {
-              id: doc.id,
+              id: docItem.id,
               fullName: data.fullName || "",
               email: data.email || "",
               phone: data.phone || "",
@@ -133,9 +130,9 @@ export default function CompanySearchPage() {
         }
       } catch (error) {
         console.error("Search Error:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => unsub();
@@ -175,14 +172,9 @@ export default function CompanySearchPage() {
       const matchesCategory =
         !searchCategory || user.category === searchCategory;
 
-      const matchesCity =
-        !searchCity || user.city === searchCity;
-
-      const matchesGender =
-        !searchGender || user.gender === searchGender;
-
-      const matchesAge =
-        !searchAge || user.ageRange === searchAge;
+      const matchesCity = !searchCity || user.city === searchCity;
+      const matchesGender = !searchGender || user.gender === searchGender;
+      const matchesAge = !searchAge || user.ageRange === searchAge;
 
       return (
         matchesName &&
@@ -310,7 +302,7 @@ export default function CompanySearchPage() {
 
         {!searched ? (
           <div className="rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm ring-1 ring-slate-200">
-            اختر الفلاتر التي تريدها ثم اضغط على زر <span className="font-bold">بحث</span>.
+            اختر الفلاتر ثم اضغط على <span className="font-bold">بحث</span>.
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -320,11 +312,29 @@ export default function CompanySearchPage() {
                   key={user.id}
                   className="rounded-2xl bg-white p-6 shadow"
                 >
-                  <h2 className="text-xl font-bold">
-                    {user.fullName || "مستخدم"}
-                  </h2>
+                  <div className="mb-4 flex items-center gap-4">
+                    {user.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt={user.fullName || "Talent"}
+                        className="h-16 w-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-2xl">
+                        👤
+                      </div>
+                    )}
 
-                  <p className="mt-2">📂 {user.category || "غير محدد"}</p>
+                    <div>
+                      <h2 className="text-xl font-bold">
+                        {user.fullName || "مستخدم"}
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        {user.category || "غير محدد"}
+                      </p>
+                    </div>
+                  </div>
+
                   <p>📍 {user.city || "غير محدد"}</p>
                   <p>👤 {user.gender || "-"}</p>
                   <p>🎂 {user.ageRange || "-"}</p>
@@ -337,6 +347,15 @@ export default function CompanySearchPage() {
                   <div className="mt-4 text-sm">
                     <p>{user.email || "لا يوجد بريد"}</p>
                     <p>{user.phone || "لا يوجد رقم"}</p>
+                  </div>
+
+                  <div className="mt-5">
+                    <Link
+                      href={`/company/talent/${user.id}`}
+                      className="inline-block rounded-xl bg-slate-950 px-5 py-3 font-bold text-white hover:bg-slate-800"
+                    >
+                      عرض الملف
+                    </Link>
                   </div>
                 </div>
               ))

@@ -135,3 +135,72 @@ a:hover {
     opacity: 0.18;
   }
 }
+
+/* خلفية متحركة للصفحة الأولى */
+.floating-work-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-work-item {
+  position: absolute;
+  bottom: -120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation-name: floatUpLoop;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.floating-work-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.floating-work-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.floating-work-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(15, 23, 42, 0.55);
+  white-space: nowrap;
+}
+
+@keyframes floatUpLoop {
+  0% {
+    transform: translateY(0) scale(0.9);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 0.22;
+  }
+
+  85% {
+    opacity: 0.1;
+  }
+
+  100% {
+    transform: translateY(-110vh) scale(1.08);
+    opacity: 0;
+  }
+}

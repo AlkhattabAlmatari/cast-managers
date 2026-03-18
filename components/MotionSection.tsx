@@ -5,22 +5,22 @@ import { ReactNode } from "react";
 
 type MotionSectionProps = {
   children: ReactNode;
-  delay?: number;
   className?: string;
+  delay?: number;
 };
 
 export default function MotionSection({
   children,
-  delay = 0,
   className = "",
+  delay = 0,
 }: MotionSectionProps) {
   return (
     <motion.div
+      className={className}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, amount: 0.2 }}
-      transition={{ duration: 0.8, delay }}
-      className={className}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.7, delay, ease: "easeOut" }}
     >
       {children}
     </motion.div>
