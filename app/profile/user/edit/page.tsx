@@ -1,11 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
+
+const saudiCities = [
+  "الرياض",
+  "جدة",
+  "مكة المكرمة",
+  "المدينة المنورة",
+  "الدمام",
+  "الخبر",
+  "الظهران",
+  "الطائف",
+  "أبها",
+  "خميس مشيط",
+  "تبوك",
+  "حائل",
+  "بريدة",
+  "عنيزة",
+  "الجبيل",
+  "ينبع",
+  "نجران",
+  "جازان",
+  "الأحساء",
+  "القطيف",
+  "الخرج",
+  "الباحة",
+  "سكاكا",
+  "عرعر",
+];
+
+const categoryOptions = [
+  "ممثل",
+  "مقدم",
+  "موديل",
+  "منظم فعاليات",
+  "كومبارس",
+  "بروموتر / معلن",
+  "صانع محتوى",
+  "مذيع",
+  "مضيف / مضيفة فعاليات",
+  "فوتوجينيك / إعلان",
+];
 
 export default function EditUserProfilePage() {
   const router = useRouter();
@@ -17,11 +58,25 @@ export default function EditUserProfilePage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
-  const [ageRange, setAgeRange] = useState("");
+  const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [nationality, setNationality] = useState("");
-  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const ages = useMemo(() => {
+    return Array.from({ length: 83 }, (_, i) => String(i + 18));
+  }, []);
+
+  const toggleCategory = (value: string) => {
+    setCategories((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
+  };
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -32,19 +87,20 @@ export default function EditUserProfilePage() {
 
       setUid(user.uid);
 
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
+      const refDoc = doc(db, "users", user.uid);
+      const snap = await getDoc(refDoc);
 
       if (snap.exists()) {
         const data = snap.data();
         setFullName(data.fullName || "");
         setPhone(data.phone || "");
         setCity(data.city || "");
-        setAgeRange(data.ageRange || "");
+        setAge(data.age ? String(data.age) : "");
         setGender(data.gender || "");
         setNationality(data.nationality || "");
-        setCategory(data.category || "");
+        setCategories(Array.isArray(data.categories) ? data.categories : []);
         setExperience(data.experience || "");
+        setProfileImageUrl(data.profileImageUrl || "");
       }
 
       setLoading(false);
@@ -55,21 +111,30 @@ export default function EditUserProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!uid) return;
 
     setSaving(true);
 
     try {
+      let finalImageUrl = profileImageUrl;
+
+      if (imageFile) {
+        const fileExtension = imageFile.name.split(".").pop() || "jpg";
+        const imageRef = ref(storage, `users/${uid}/profile.${fileExtension}`);
+        await uploadBytes(imageRef, imageFile);
+        finalImageUrl = await getDownloadURL(imageRef);
+      }
+
       await updateDoc(doc(db, "users", uid), {
         fullName,
         phone,
         city,
-        ageRange,
+        age: Number(age),
         gender,
         nationality,
-        category,
+        categories,
         experience,
+        profileImageUrl: finalImageUrl,
         updatedAt: new Date().toISOString(),
       });
 
@@ -104,9 +169,6 @@ export default function EditUserProfilePage() {
             <h1 className="mt-3 text-3xl font-black text-slate-950">
               تعديل بيانات المستخدم
             </h1>
-            <p className="mt-3 text-slate-600">
-              عدل بياناتك واحفظها لتظهر بشكل صحيح داخل المنصة.
-            </p>
           </div>
 
           <form onSubmit={handleSave} className="grid gap-5 md:grid-cols-2">
@@ -117,7 +179,7 @@ export default function EditUserProfilePage() {
               <input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               />
             </div>
 
@@ -128,7 +190,7 @@ export default function EditUserProfilePage() {
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               />
             </div>
 
@@ -139,50 +201,32 @@ export default function EditUserProfilePage() {
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               >
                 <option value="">اختر المدينة</option>
-                <option value="الرياض">الرياض</option>
-                <option value="جدة">جدة</option>
-                <option value="مكة المكرمة">مكة المكرمة</option>
-                <option value="المدينة المنورة">المدينة المنورة</option>
-                <option value="الدمام">الدمام</option>
-                <option value="الخبر">الخبر</option>
-                <option value="الظهران">الظهران</option>
-                <option value="الطائف">الطائف</option>
-                <option value="أبها">أبها</option>
-                <option value="خميس مشيط">خميس مشيط</option>
-                <option value="تبوك">تبوك</option>
-                <option value="حائل">حائل</option>
-                <option value="بريدة">بريدة</option>
-                <option value="عنيزة">عنيزة</option>
-                <option value="الجبيل">الجبيل</option>
-                <option value="ينبع">ينبع</option>
-                <option value="نجران">نجران</option>
-                <option value="جازان">جازان</option>
-                <option value="الأحساء">الأحساء</option>
-                <option value="القطيف">القطيف</option>
-                <option value="الخرج">الخرج</option>
-                <option value="الباحة">الباحة</option>
-                <option value="سكاكا">سكاكا</option>
-                <option value="عرعر">عرعر</option>
+                {saudiCities.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                الفئة العمرية
+                العمر
               </label>
               <select
-                value={ageRange}
-                onChange={(e) => setAgeRange(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               >
-                <option value="">اختر الفئة العمرية</option>
-                <option value="18-25">18 - 25</option>
-                <option value="25-30">25 - 30</option>
-                <option value="30-40">30 - 40</option>
-                <option value="40+">40+</option>
+                <option value="">اختر العمر</option>
+                {ages.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -193,7 +237,7 @@ export default function EditUserProfilePage() {
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               >
                 <option value="">اختر الجنس</option>
                 <option value="ذكر">ذكر</option>
@@ -208,41 +252,61 @@ export default function EditUserProfilePage() {
               <input
                 value={nationality}
                 onChange={(e) => setNationality(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-bold text-slate-700">
-                الفئة
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
-              >
-                <option value="">اختر الفئة</option>
-                <option value="ممثل">ممثل</option>
-                <option value="مقدم">مقدم</option>
-                <option value="موديل">موديل</option>
-                <option value="منظم فعاليات">منظم فعاليات</option>
-                <option value="كومبارس">كومبارس</option>
-                <option value="بروموتر / معلن">بروموتر / معلن</option>
-                <option value="صانع محتوى">صانع محتوى</option>
-                <option value="مذيع">مذيع</option>
-                <option value="مضيف / مضيفة فعاليات">مضيف / مضيفة فعاليات</option>
-                <option value="فوتوجينيك / إعلان">فوتوجينيك / إعلان</option>
-              </select>
+            <div className="md:col-span-2 rounded-2xl border border-slate-300 p-4">
+              <p className="mb-3 text-sm font-bold text-slate-700">
+                الفئات (يمكن اختيار أكثر من فئة)
+              </p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {categoryOptions.map((item) => (
+                  <label
+                    key={item}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={categories.includes(item)}
+                      onChange={() => toggleCategory(item)}
+                    />
+                    <span>{item}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-bold text-slate-700">
-                الخبرة / النبذة / نوع الموهبة
+                الخبرة / النبذة
               </label>
               <textarea
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
-                className="min-h-36 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-500"
+                className="min-h-36 w-full rounded-2xl border border-slate-300 px-4 py-3"
+              />
+            </div>
+
+            <div className="md:col-span-2 rounded-2xl border border-slate-300 p-4">
+              <label className="mb-2 block text-sm font-bold text-slate-700">
+                صورة المستخدم
+              </label>
+
+              {profileImageUrl ? (
+                <img
+                  src={profileImageUrl}
+                  alt="Profile"
+                  className="mb-4 h-28 w-28 rounded-full object-cover"
+                />
+              ) : null}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="w-full"
               />
             </div>
 
@@ -258,9 +322,9 @@ export default function EditUserProfilePage() {
               <button
                 type="button"
                 onClick={() => router.push("/dashboard/user")}
-                className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 hover:bg-slate-50"
+                className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900"
               >
-                رجوع للوحة المستخدم
+                رجوع
               </button>
             </div>
           </form>
