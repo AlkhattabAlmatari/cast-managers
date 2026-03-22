@@ -14,12 +14,12 @@ type UserTalent = {
   email?: string;
   phone?: string;
   city?: string;
-  ageRange?: string;
+  age?: number;
   gender?: string;
   nationality?: string;
   experience?: string;
-  category?: string;
-  photoURL?: string;
+  categories?: string[];
+  profileImageUrl?: string;
 };
 
 const saudiCities = [
@@ -62,6 +62,8 @@ const categories = [
   "فوتوجينيك / إعلان",
 ];
 
+const ages = Array.from({ length: 83 }, (_, i) => i + 18);
+
 export default function CompanySearchPage() {
   const router = useRouter();
 
@@ -73,13 +75,15 @@ export default function CompanySearchPage() {
   const [categoryInput, setCategoryInput] = useState("");
   const [cityInput, setCityInput] = useState("");
   const [genderInput, setGenderInput] = useState("");
-  const [ageInput, setAgeInput] = useState("");
+  const [minAgeInput, setMinAgeInput] = useState("");
+  const [maxAgeInput, setMaxAgeInput] = useState("");
 
   const [searchName, setSearchName] = useState("");
   const [searchCategory, setSearchCategory] = useState("");
   const [searchCity, setSearchCity] = useState("");
   const [searchGender, setSearchGender] = useState("");
-  const [searchAge, setSearchAge] = useState("");
+  const [searchMinAge, setSearchMinAge] = useState("");
+  const [searchMaxAge, setSearchMaxAge] = useState("");
 
   const [searched, setSearched] = useState(false);
 
@@ -111,18 +115,33 @@ export default function CompanySearchPage() {
           const usersData: UserTalent[] = usersSnap.docs.map((docItem) => {
             const data = docItem.data();
 
+            // دعم المستخدمين الجدد والقدامى
+            let normalizedAge: number | undefined = undefined;
+            if (typeof data.age === "number") {
+              normalizedAge = data.age;
+            } else if (typeof data.age === "string" && data.age.trim() !== "") {
+              normalizedAge = Number(data.age);
+            }
+
+            let normalizedCategories: string[] = [];
+            if (Array.isArray(data.categories)) {
+              normalizedCategories = data.categories;
+            } else if (typeof data.category === "string" && data.category) {
+              normalizedCategories = [data.category];
+            }
+
             return {
               id: docItem.id,
               fullName: data.fullName || "",
               email: data.email || "",
               phone: data.phone || "",
               city: data.city || "",
-              ageRange: data.ageRange || "",
+              age: normalizedAge,
               gender: data.gender || "",
               nationality: data.nationality || "",
               experience: data.experience || "",
-              category: data.category || "",
-              photoURL: data.photoURL || "",
+              categories: normalizedCategories,
+              profileImageUrl: data.profileImageUrl || data.photoURL || "",
             };
           });
 
@@ -143,7 +162,8 @@ export default function CompanySearchPage() {
     setSearchCategory(categoryInput);
     setSearchCity(cityInput);
     setSearchGender(genderInput);
-    setSearchAge(ageInput);
+    setSearchMinAge(minAgeInput);
+    setSearchMaxAge(maxAgeInput);
     setSearched(true);
   };
 
@@ -152,13 +172,15 @@ export default function CompanySearchPage() {
     setCategoryInput("");
     setCityInput("");
     setGenderInput("");
-    setAgeInput("");
+    setMinAgeInput("");
+    setMaxAgeInput("");
 
     setSearchName("");
     setSearchCategory("");
     setSearchCity("");
     setSearchGender("");
-    setSearchAge("");
+    setSearchMinAge("");
+    setSearchMaxAge("");
 
     setSearched(false);
   };
@@ -170,21 +192,39 @@ export default function CompanySearchPage() {
         user.fullName?.toLowerCase().includes(searchName.toLowerCase());
 
       const matchesCategory =
-        !searchCategory || user.category === searchCategory;
+        !searchCategory ||
+        (user.categories || []).includes(searchCategory);
 
       const matchesCity = !searchCity || user.city === searchCity;
       const matchesGender = !searchGender || user.gender === searchGender;
-      const matchesAge = !searchAge || user.ageRange === searchAge;
+
+      const minAge = searchMinAge ? Number(searchMinAge) : null;
+      const maxAge = searchMaxAge ? Number(searchMaxAge) : null;
+
+      const matchesMinAge =
+        minAge === null || (typeof user.age === "number" && user.age >= minAge);
+
+      const matchesMaxAge =
+        maxAge === null || (typeof user.age === "number" && user.age <= maxAge);
 
       return (
         matchesName &&
         matchesCategory &&
         matchesCity &&
         matchesGender &&
-        matchesAge
+        matchesMinAge &&
+        matchesMaxAge
       );
     });
-  }, [users, searchName, searchCategory, searchCity, searchGender, searchAge]);
+  }, [
+    users,
+    searchName,
+    searchCategory,
+    searchCity,
+    searchGender,
+    searchMinAge,
+    searchMaxAge,
+  ]);
 
   if (loading) {
     return (
@@ -226,7 +266,7 @@ export default function CompanySearchPage() {
         <h1 className="mb-6 text-3xl font-black">البحث عن المواهب</h1>
 
         <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
             <input
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
@@ -271,15 +311,29 @@ export default function CompanySearchPage() {
             </select>
 
             <select
-              value={ageInput}
-              onChange={(e) => setAgeInput(e.target.value)}
+              value={minAgeInput}
+              onChange={(e) => setMinAgeInput(e.target.value)}
               className="rounded-xl border p-3"
             >
-              <option value="">كل الأعمار</option>
-              <option value="18-25">18 - 25</option>
-              <option value="25-30">25 - 30</option>
-              <option value="30-40">30 - 40</option>
-              <option value="40+">40+</option>
+              <option value="">من عمر</option>
+              {ages.map((age) => (
+                <option key={age} value={age}>
+                  {age}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={maxAgeInput}
+              onChange={(e) => setMaxAgeInput(e.target.value)}
+              className="rounded-xl border p-3"
+            >
+              <option value="">إلى عمر</option>
+              {ages.map((age) => (
+                <option key={age} value={age}>
+                  {age}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -313,9 +367,9 @@ export default function CompanySearchPage() {
                   className="rounded-2xl bg-white p-6 shadow"
                 >
                   <div className="mb-4 flex items-center gap-4">
-                    {user.photoURL ? (
+                    {user.profileImageUrl ? (
                       <img
-                        src={user.photoURL}
+                        src={user.profileImageUrl}
                         alt={user.fullName || "Talent"}
                         className="h-16 w-16 rounded-full object-cover"
                       />
@@ -330,14 +384,16 @@ export default function CompanySearchPage() {
                         {user.fullName || "مستخدم"}
                       </h2>
                       <p className="text-sm text-slate-500">
-                        {user.category || "غير محدد"}
+                        {(user.categories || []).length > 0
+                          ? user.categories?.join(" • ")
+                          : "غير محدد"}
                       </p>
                     </div>
                   </div>
 
                   <p>📍 {user.city || "غير محدد"}</p>
                   <p>👤 {user.gender || "-"}</p>
-                  <p>🎂 {user.ageRange || "-"}</p>
+                  <p>🎂 {user.age || "-"}</p>
 
                   <div className="mt-4">
                     <p className="text-sm text-gray-500">الخبرة / النبذة</p>
