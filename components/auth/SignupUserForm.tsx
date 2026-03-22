@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { auth, db, googleProvider, storage } from "@/lib/firebase";
+import { auth, db, googleProvider } from "@/lib/firebase";
 
 const saudiCities = [
   "الرياض",
@@ -58,7 +57,6 @@ export default function SignupUserForm() {
   const [nationality, setNationality] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const ages = useMemo(() => {
@@ -87,11 +85,6 @@ export default function SignupUserForm() {
       return;
     }
 
-    if (!imageFile) {
-      alert("أرفق صورة المستخدم أولاً");
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -108,16 +101,6 @@ export default function SignupUserForm() {
         return;
       }
 
-      // رفع الصورة
-      const fileExtension = imageFile.name.split(".").pop() || "jpg";
-      const imageRef = ref(
-        storage,
-        `users/${user.uid}/profile.${fileExtension}`
-      );
-
-      await uploadBytes(imageRef, imageFile);
-      const profileImageUrl = await getDownloadURL(imageRef);
-
       await setDoc(
         userRef,
         {
@@ -131,7 +114,7 @@ export default function SignupUserForm() {
           categories,
           experience,
           email: user.email || "",
-          profileImageUrl,
+          photoURL: user.photoURL || "",
           views: 0,
           likes: 0,
           rating: "0 / 5",
@@ -245,19 +228,8 @@ export default function SignupUserForm() {
           onChange={(e) => setExperience(e.target.value)}
         />
 
-        <div className="rounded-2xl border border-slate-300 p-4">
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            صورة المستخدم
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            className="w-full"
-          />
-          <p className="mt-2 text-xs text-slate-500">
-            ارفع صورتك لتظهر للشركات في نتائج البحث والملف الشخصي.
-          </p>
+        <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+          سيتم استخدام صورة حساب Google الحالية بدل رفع صورة يدويًا.
         </div>
 
         <button
