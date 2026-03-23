@@ -1,50 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
-
-const saudiCities = [
-  "الرياض",
-  "جدة",
-  "مكة المكرمة",
-  "المدينة المنورة",
-  "الدمام",
-  "الخبر",
-  "الظهران",
-  "الطائف",
-  "أبها",
-  "خميس مشيط",
-  "تبوك",
-  "حائل",
-  "بريدة",
-  "عنيزة",
-  "الجبيل",
-  "ينبع",
-  "نجران",
-  "جازان",
-  "الأحساء",
-  "القطيف",
-  "الخرج",
-  "الباحة",
-  "سكاكا",
-  "عرعر",
-];
-
-const categoryOptions = [
-  "ممثل",
-  "مقدم",
-  "موديل",
-  "منظم فعاليات",
-  "كومبارس",
-  "بروموتر / معلن",
-  "صانع محتوى",
-  "مذيع",
-  "مضيف / مضيفة فعاليات",
-  "فوتوجينيك / إعلان",
-];
+import {
+  ages,
+  categoryOptions,
+  heights,
+  nationalities,
+  saudiCities,
+  weights,
+} from "@/lib/userOptions";
 
 export default function SignupUserForm() {
   const router = useRouter();
@@ -55,13 +23,11 @@ export default function SignupUserForm() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [nationality, setNationality] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const ages = useMemo(() => {
-    return Array.from({ length: 83 }, (_, i) => String(i + 18));
-  }, []);
 
   const toggleCategory = (value: string) => {
     setCategories((prev) =>
@@ -79,6 +45,8 @@ export default function SignupUserForm() {
       !age ||
       !gender ||
       !nationality ||
+      !heightCm ||
+      !weightKg ||
       categories.length === 0
     ) {
       alert("أكمل جميع البيانات المطلوبة أولاً");
@@ -111,6 +79,8 @@ export default function SignupUserForm() {
           age: Number(age),
           gender,
           nationality,
+          heightCm: Number(heightCm),
+          weightKg: Number(weightKg),
           categories,
           experience,
           email: user.email || "",
@@ -184,6 +154,32 @@ export default function SignupUserForm() {
 
         <select
           className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+          value={heightCm}
+          onChange={(e) => setHeightCm(e.target.value)}
+        >
+          <option value="">اختر الطول (سم)</option>
+          {heights.map((item) => (
+            <option key={item} value={item}>
+              {item} سم
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+          value={weightKg}
+          onChange={(e) => setWeightKg(e.target.value)}
+        >
+          <option value="">اختر الوزن (كجم)</option>
+          {weights.map((item) => (
+            <option key={item} value={item}>
+              {item} كجم
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3"
           value={gender}
           onChange={(e) => setGender(e.target.value)}
         >
@@ -192,12 +188,18 @@ export default function SignupUserForm() {
           <option value="أنثى">أنثى</option>
         </select>
 
-        <input
+        <select
           className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-          placeholder="الجنسية"
           value={nationality}
           onChange={(e) => setNationality(e.target.value)}
-        />
+        >
+          <option value="">اختر الجنسية</option>
+          {nationalities.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
 
         <div className="rounded-2xl border border-slate-300 p-4">
           <p className="mb-3 text-sm font-bold text-slate-700">
@@ -229,7 +231,7 @@ export default function SignupUserForm() {
         />
 
         <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-          سيتم استخدام صورة حساب Google الحالية بدل رفع صورة يدويًا.
+          سيتم استخدام صورة حساب Google الحالية.
         </div>
 
         <button

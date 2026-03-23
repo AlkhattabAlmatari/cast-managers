@@ -1,51 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/lib/firebase";
-
-const saudiCities = [
-  "الرياض",
-  "جدة",
-  "مكة المكرمة",
-  "المدينة المنورة",
-  "الدمام",
-  "الخبر",
-  "الظهران",
-  "الطائف",
-  "أبها",
-  "خميس مشيط",
-  "تبوك",
-  "حائل",
-  "بريدة",
-  "عنيزة",
-  "الجبيل",
-  "ينبع",
-  "نجران",
-  "جازان",
-  "الأحساء",
-  "القطيف",
-  "الخرج",
-  "الباحة",
-  "سكاكا",
-  "عرعر",
-];
-
-const categoryOptions = [
-  "ممثل",
-  "مقدم",
-  "موديل",
-  "منظم فعاليات",
-  "كومبارس",
-  "بروموتر / معلن",
-  "صانع محتوى",
-  "مذيع",
-  "مضيف / مضيفة فعاليات",
-  "فوتوجينيك / إعلان",
-];
+import {
+  ages,
+  categoryOptions,
+  heights,
+  nationalities,
+  saudiCities,
+  weights,
+} from "@/lib/userOptions";
 
 export default function EditUserProfilePage() {
   const router = useRouter();
@@ -60,13 +28,11 @@ export default function EditUserProfilePage() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [nationality, setNationality] = useState("");
+  const [heightCm, setHeightCm] = useState("");
+  const [weightKg, setWeightKg] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
   const [photoURL, setPhotoURL] = useState("");
-
-  const ages = useMemo(() => {
-    return Array.from({ length: 83 }, (_, i) => String(i + 18));
-  }, []);
 
   const toggleCategory = (value: string) => {
     setCategories((prev) =>
@@ -102,6 +68,8 @@ export default function EditUserProfilePage() {
         setAge(data.age ? String(data.age) : "");
         setGender(data.gender || "");
         setNationality(data.nationality || "");
+        setHeightCm(data.heightCm ? String(data.heightCm) : "");
+        setWeightKg(data.weightKg ? String(data.weightKg) : "");
         setCategories(Array.isArray(data.categories) ? data.categories : []);
         setExperience(data.experience || "");
         setPhotoURL(data.photoURL || "");
@@ -131,6 +99,8 @@ export default function EditUserProfilePage() {
         age: Number(age),
         gender,
         nationality,
+        heightCm: Number(heightCm),
+        weightKg: Number(weightKg),
         categories,
         experience,
         updatedAt: new Date().toISOString(),
@@ -230,6 +200,42 @@ export default function EditUserProfilePage() {
 
             <div>
               <label className="mb-2 block text-sm font-bold text-slate-700">
+                الطول (سم)
+              </label>
+              <select
+                value={heightCm}
+                onChange={(e) => setHeightCm(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+              >
+                <option value="">اختر الطول</option>
+                {heights.map((item) => (
+                  <option key={item} value={item}>
+                    {item} سم
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-700">
+                الوزن (كجم)
+              </label>
+              <select
+                value={weightKg}
+                onChange={(e) => setWeightKg(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+              >
+                <option value="">اختر الوزن</option>
+                {weights.map((item) => (
+                  <option key={item} value={item}>
+                    {item} كجم
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-700">
                 الجنس
               </label>
               <select
@@ -243,15 +249,22 @@ export default function EditUserProfilePage() {
               </select>
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-bold text-slate-700">
                 الجنسية
               </label>
-              <input
+              <select
                 value={nationality}
                 onChange={(e) => setNationality(e.target.value)}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-              />
+              >
+                <option value="">اختر الجنسية</option>
+                {nationalities.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="md:col-span-2 rounded-2xl border border-slate-300 p-4">
