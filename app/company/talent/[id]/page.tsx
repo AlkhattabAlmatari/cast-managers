@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/lib/firebase";
@@ -15,13 +15,17 @@ type TalentData = {
   age?: number;
   gender?: string;
   nationality?: string;
+  heightCm?: number;
+  weightKg?: number;
   experience?: string;
   categories?: string[];
-  profileImageUrl?: string;
   photoURL?: string;
   views?: number;
   likes?: number;
-  rating?: string;
+  ratingAverage?: number;
+  ratingCount?: number;
+  likedBy?: string[];
+  ratingsBy?: Record<string, number>;
 };
 
 export default function TalentProfilePage() {
@@ -30,7 +34,11 @@ export default function TalentProfilePage() {
   const talentId = params?.id as string;
 
   const [loading, setLoading] = useState(true);
+  const [companyUid, setCompanyUid] = useState("");
   const [talent, setTalent] = useState<TalentData | null>(null);
+  const [selectedRating, setSelectedRating] = useState("5");
+  const [submittingLike, setSubmittingLike] = useState(false);
+  const [submittingRate, setSubmittingRate] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (currentUser) => {
@@ -40,14 +48,27 @@ export default function TalentProfilePage() {
       }
 
       try {
-        const companySnap = await getDoc(doc(db, "companies", currentUser.uid));
+        setCompanyUid(currentUser.uid);
 
+        const companySnap = await getDoc(doc(db, "companies", currentUser.uid));
         if (!companySnap.exists()) {
           router.push("/dashboard/company");
           return;
         }
 
         const talentRef = doc(db, "users", talentId);
+
+        await runTransaction(db, async (transaction) => {
+          const talentSnap = await transaction.get(talentRef);
+
+          if (!talentSnap.exists()) return;
+
+          const currentViews = talentSnap.data().views || 0;
+          transaction.update(talentRef, {
+            views: currentViews + 1,
+          });
+        });
+
         const talentSnap = await getDoc(talentRef);
 
         if (!talentSnap.exists()) {
@@ -56,40 +77,20 @@ export default function TalentProfilePage() {
           return;
         }
 
-        const data = talentSnap.data();
-
+        const data = talentSnap.data() as TalentData;
         setTalent({
-          fullName: data.fullName || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          city: data.city || "",
-          age:
-            typeof data.age === "number"
-              ? data.age
-              : data.age
-              ? Number(data.age)
-              : undefined,
-          gender: data.gender || "",
-          nationality: data.nationality || "",
-          experience: data.experience || "",
-          categories: Array.isArray(data.categories)
-            ? data.categories
-            : data.category
-            ? [data.category]
-            : [],
-          profileImageUrl: data.profileImageUrl || "",
-          photoURL: data.photoURL || "",
-          views: data.views || 0,
-          likes: data.likes || 0,
-          rating: data.rating || "0 / 5",
+          ...data,
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          likedBy: Array.isArray(data.likedBy) ? data.likedBy : [],
+          ratingsBy: data.ratingsBy || {},
         });
 
-        await updateDoc(talentRef, {
-          views: increment(1),
-        });
+        const existingRating = data.ratingsBy?.[currentUser.uid];
+        if (existingRating) {
+          setSelectedRating(String(existingRating));
+        }
       } catch (error) {
-        console.error("Talent profile error:", error);
-        alert("تعذر فتح الملف الشخصي");
+        console.error(error);
         router.push("/company/search");
       } finally {
         setLoading(false);
@@ -100,19 +101,113 @@ export default function TalentProfilePage() {
   }, [router, talentId]);
 
   const handleLike = async () => {
-    if (!talentId) return;
+    if (!companyUid || !talentId || submittingLike) return;
+
+    setSubmittingLike(true);
 
     try {
-      await updateDoc(doc(db, "users", talentId), {
-        likes: increment(1),
+      const userRef = doc(db, "users", talentId);
+
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(userRef);
+        if (!snap.exists()) return;
+
+        const data = snap.data() as TalentData;
+        const likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
+
+        if (likedBy.includes(companyUid)) {
+          throw new Error("already-liked");
+        }
+
+        transaction.update(userRef, {
+          likedBy: [...likedBy, companyUid],
+          likes: (data.likes || 0) + 1,
+        });
       });
 
-      setTalent((prev) => ({
-        ...prev,
-        likes: (prev?.likes || 0) + 1,
-      }));
+      setTalent((prev) =>
+        prev
+          ? {
+              ...prev,
+              likedBy: [...(prev.likedBy || []), companyUid],
+              likes: (prev.likes || 0) + 1,
+            }
+          : prev
+      );
+
+      alert("تم تسجيل الإعجاب");
+    } catch (error: any) {
+      if (error.message === "already-liked") {
+        alert("أنت سجلت إعجابك مسبقًا لهذا المستخدم");
+      } else {
+        alert("تعذر تسجيل الإعجاب");
+      }
+    } finally {
+      setSubmittingLike(false);
+    }
+  };
+
+  const handleRate = async () => {
+    if (!companyUid || !talentId || submittingRate) return;
+
+    setSubmittingRate(true);
+
+    try {
+      const userRef = doc(db, "users", talentId);
+
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(userRef);
+        if (!snap.exists()) return;
+
+        const data = snap.data() as TalentData;
+        const ratingsBy = data.ratingsBy || {};
+        const ratingValue = Number(selectedRating);
+
+        ratingsBy[companyUid] = ratingValue;
+
+        const ratingValues = Object.values(ratingsBy).map(Number);
+        const ratingCount = ratingValues.length;
+        const ratingAverage =
+          ratingCount > 0
+            ? ratingValues.reduce((sum, value) => sum + value, 0) / ratingCount
+            : 0;
+
+        transaction.update(userRef, {
+          ratingsBy,
+          ratingCount,
+          ratingAverage,
+        });
+      });
+
+      setTalent((prev) => {
+        if (!prev) return prev;
+
+        const updatedRatingsBy = {
+          ...(prev.ratingsBy || {}),
+          [companyUid]: Number(selectedRating),
+        };
+
+        const ratingValues = Object.values(updatedRatingsBy).map(Number);
+        const ratingCount = ratingValues.length;
+        const ratingAverage =
+          ratingCount > 0
+            ? ratingValues.reduce((sum, value) => sum + value, 0) / ratingCount
+            : 0;
+
+        return {
+          ...prev,
+          ratingsBy: updatedRatingsBy,
+          ratingCount,
+          ratingAverage,
+        };
+      });
+
+      alert("تم حفظ التقييم");
     } catch (error) {
-      console.error("Like error:", error);
+      console.error(error);
+      alert("تعذر حفظ التقييم");
+    } finally {
+      setSubmittingRate(false);
     }
   };
 
@@ -138,6 +233,9 @@ export default function TalentProfilePage() {
     );
   }
 
+  const alreadyLiked = (talent.likedBy || []).includes(companyUid);
+  const myRating = talent.ratingsBy?.[companyUid];
+
   return (
     <main className="min-h-screen bg-slate-100">
       <Navbar />
@@ -146,9 +244,9 @@ export default function TalentProfilePage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
             <div className="flex flex-col items-center text-center">
-              {talent.profileImageUrl || talent.photoURL ? (
+              {talent.photoURL ? (
                 <img
-                  src={talent.profileImageUrl || talent.photoURL}
+                  src={talent.photoURL}
                   alt={talent.fullName || "Talent"}
                   className="h-40 w-40 rounded-full object-cover ring-4 ring-slate-100"
                 />
@@ -171,15 +269,51 @@ export default function TalentProfilePage() {
               <div className="mt-6 grid w-full grid-cols-3 gap-3">
                 <MiniStat label="المشاهدات" value={String(talent.views || 0)} />
                 <MiniStat label="الإعجابات" value={String(talent.likes || 0)} />
-                <MiniStat label="التقييم" value={talent.rating || "0 / 5"} />
+                <MiniStat
+                  label="التقييم"
+                  value={
+                    talent.ratingAverage
+                      ? `${talent.ratingAverage.toFixed(1)} / 5`
+                      : "0 / 5"
+                  }
+                />
               </div>
 
               <button
                 onClick={handleLike}
-                className="mt-6 rounded-2xl bg-slate-950 px-6 py-3 font-bold text-white hover:bg-slate-800"
+                disabled={alreadyLiked || submittingLike}
+                className="mt-6 rounded-2xl bg-slate-950 px-6 py-3 font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                إعجاب
+                {alreadyLiked ? "تم الإعجاب" : "إعجاب"}
               </button>
+
+              <div className="mt-6 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="mb-3 text-sm font-bold text-slate-700">
+                  {myRating ? "تعديل تقييمك" : "تقييم المستخدم"}
+                </p>
+
+                <div className="flex items-center gap-3">
+                  <select
+                    value={selectedRating}
+                    onChange={(e) => setSelectedRating(e.target.value)}
+                    className="flex-1 rounded-xl border border-slate-300 px-4 py-3"
+                  >
+                    <option value="1">1 / 5</option>
+                    <option value="2">2 / 5</option>
+                    <option value="3">3 / 5</option>
+                    <option value="4">4 / 5</option>
+                    <option value="5">5 / 5</option>
+                  </select>
+
+                  <button
+                    onClick={handleRate}
+                    disabled={submittingRate}
+                    className="rounded-xl bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800 disabled:opacity-60"
+                  >
+                    {myRating ? "تحديث" : "حفظ"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -195,6 +329,14 @@ export default function TalentProfilePage() {
               <InfoCard label="رقم الجوال" value={talent.phone} />
               <InfoCard label="المدينة" value={talent.city} />
               <InfoCard label="العمر" value={talent.age} />
+              <InfoCard
+                label="الطول"
+                value={talent.heightCm ? `${talent.heightCm} سم` : "غير مضاف"}
+              />
+              <InfoCard
+                label="الوزن"
+                value={talent.weightKg ? `${talent.weightKg} كجم` : "غير مضاف"}
+              />
               <InfoCard label="الجنس" value={talent.gender} />
               <InfoCard label="الجنسية" value={talent.nationality} />
               <InfoCard
