@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -19,6 +18,7 @@ type UserTalent = {
   nationality?: string;
   experience?: string;
   categories?: string[];
+  photoURL?: string;
   profileImageUrl?: string;
 };
 
@@ -115,7 +115,6 @@ export default function CompanySearchPage() {
           const usersData: UserTalent[] = usersSnap.docs.map((docItem) => {
             const data = docItem.data();
 
-            // دعم المستخدمين الجدد والقدامى
             let normalizedAge: number | undefined = undefined;
             if (typeof data.age === "number") {
               normalizedAge = data.age;
@@ -141,7 +140,8 @@ export default function CompanySearchPage() {
               nationality: data.nationality || "",
               experience: data.experience || "",
               categories: normalizedCategories,
-              profileImageUrl: data.profileImageUrl || data.photoURL || "",
+              profileImageUrl: data.profileImageUrl || "",
+              photoURL: data.photoURL || "",
             };
           });
 
@@ -192,8 +192,7 @@ export default function CompanySearchPage() {
         user.fullName?.toLowerCase().includes(searchName.toLowerCase());
 
       const matchesCategory =
-        !searchCategory ||
-        (user.categories || []).includes(searchCategory);
+        !searchCategory || (user.categories || []).includes(searchCategory);
 
       const matchesCity = !searchCity || user.city === searchCity;
       const matchesGender = !searchGender || user.gender === searchGender;
@@ -367,9 +366,9 @@ export default function CompanySearchPage() {
                   className="rounded-2xl bg-white p-6 shadow"
                 >
                   <div className="mb-4 flex items-center gap-4">
-                    {user.profileImageUrl ? (
+                    {user.profileImageUrl || user.photoURL ? (
                       <img
-                        src={user.profileImageUrl}
+                        src={user.profileImageUrl || user.photoURL}
                         alt={user.fullName || "Talent"}
                         className="h-16 w-16 rounded-full object-cover"
                       />
@@ -384,8 +383,8 @@ export default function CompanySearchPage() {
                         {user.fullName || "مستخدم"}
                       </h2>
                       <p className="text-sm text-slate-500">
-                        {(user.categories || []).length > 0
-                          ? user.categories?.join(" • ")
+                        {(user.categories ?? []).length > 0
+                          ? (user.categories ?? []).join(" • ")
                           : "غير محدد"}
                       </p>
                     </div>
@@ -406,12 +405,12 @@ export default function CompanySearchPage() {
                   </div>
 
                   <div className="mt-5">
-                    <Link
-                      href={`/company/talent/${user.id}`}
+                    <button
+                      onClick={() => router.push(`/company/talent/${user.id}`)}
                       className="inline-block rounded-xl bg-slate-950 px-5 py-3 font-bold text-white hover:bg-slate-800"
                     >
                       عرض الملف
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))
