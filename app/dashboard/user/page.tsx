@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -55,11 +55,6 @@ export default function UserDashboardPage() {
     return () => unsub();
   }, [router]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push("/");
-  };
-
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-100">
@@ -82,7 +77,7 @@ export default function UserDashboardPage() {
             أهلاً {userData?.fullName || "بك"}
           </h1>
           <p className="mt-3 text-slate-600">
-            هنا تتابع ملفك الشخصي وتعدل بياناتك.
+            هنا تتابع ملفك الشخصي وتراجع بياناتك بسهولة.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
@@ -105,12 +100,8 @@ export default function UserDashboardPage() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-2xl font-black text-slate-950">ملفي الشخصي</h2>
-            <p className="mt-3 text-slate-600">
-              راجع بياناتك الحالية وادخل على الملف الشخصي.
-            </p>
-
-            <div className="mt-6 space-y-3 text-slate-700">
+            <h2 className="text-2xl font-black text-slate-950">ملخص البيانات</h2>
+            <div className="mt-6 grid gap-3 text-slate-700">
               <p>
                 <span className="font-bold">المدينة:</span>{" "}
                 {userData?.city || "غير محدد"}
@@ -118,6 +109,14 @@ export default function UserDashboardPage() {
               <p>
                 <span className="font-bold">العمر:</span>{" "}
                 {userData?.age || "غير محدد"}
+              </p>
+              <p>
+                <span className="font-bold">الطول:</span>{" "}
+                {userData?.heightCm ? `${userData.heightCm} سم` : "غير محدد"}
+              </p>
+              <p>
+                <span className="font-bold">الوزن:</span>{" "}
+                {userData?.weightKg ? `${userData.weightKg} كجم` : "غير محدد"}
               </p>
               <p>
                 <span className="font-bold">الجنس:</span>{" "}
@@ -128,37 +127,20 @@ export default function UserDashboardPage() {
                 {userData?.nationality || "غير محدد"}
               </p>
             </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => router.push("/profile/user")}
-                className="rounded-2xl bg-slate-950 px-6 py-3 font-bold text-white hover:bg-slate-800"
-              >
-                فتح ملفي الشخصي
-              </button>
-
-              <button
-                onClick={() => router.push("/profile/user/edit")}
-                className="rounded-2xl border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900"
-              >
-                تعديل بياناتي
-              </button>
-            </div>
           </div>
 
           <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-2xl font-black text-slate-950">الحساب</h2>
-            <p className="mt-3 text-slate-600">
-              يمكنك تسجيل الخروج من الحساب الحالي.
-            </p>
-
-            <div className="mt-6">
-              <button
-                onClick={handleLogout}
-                className="rounded-2xl bg-red-600 px-6 py-3 font-bold text-white hover:bg-red-700"
-              >
-                تسجيل الخروج
-              </button>
+            <h2 className="text-2xl font-black text-slate-950">آخر التحديثات</h2>
+            <div className="mt-6 space-y-4 text-slate-600">
+              <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                تم تجهيز لوحة المستخدم بشكل مرتب.
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                يمكنك الآن الوصول إلى ملفك الشخصي وتعديل بياناتك من القائمة.
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                التقييمات والمشاهدات والإعجابات تظهر بشكل مباشر داخل الحساب.
+              </div>
             </div>
           </div>
         </div>
