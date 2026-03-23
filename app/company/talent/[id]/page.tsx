@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
+import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/lib/firebase";
 
-type UserTalent = {
-  id: string;
+type TalentData = {
   fullName?: string;
   email?: string;
   phone?: string;
@@ -20,240 +18,122 @@ type UserTalent = {
   experience?: string;
   categories?: string[];
   profileImageUrl?: string;
+  photoURL?: string;
+  views?: number;
+  likes?: number;
+  rating?: string;
 };
 
-const saudiCities = [
-  "الرياض",
-  "جدة",
-  "مكة المكرمة",
-  "المدينة المنورة",
-  "الدمام",
-  "الخبر",
-  "الظهران",
-  "الطائف",
-  "أبها",
-  "خميس مشيط",
-  "تبوك",
-  "حائل",
-  "بريدة",
-  "عنيزة",
-  "الجبيل",
-  "ينبع",
-  "نجران",
-  "جازان",
-  "الأحساء",
-  "القطيف",
-  "الخرج",
-  "الباحة",
-  "سكاكا",
-  "عرعر",
-];
-
-const categories = [
-  "ممثل",
-  "مقدم",
-  "موديل",
-  "منظم فعاليات",
-  "كومبارس",
-  "بروموتر / معلن",
-  "صانع محتوى",
-  "مذيع",
-  "مضيف / مضيفة فعاليات",
-  "فوتوجينيك / إعلان",
-];
-
-const ages = Array.from({ length: 83 }, (_, i) => i + 18);
-
-export default function CompanySearchPage() {
+export default function TalentProfilePage() {
   const router = useRouter();
+  const params = useParams();
+  const talentId = params?.id as string;
 
   const [loading, setLoading] = useState(true);
-  const [subscribed, setSubscribed] = useState(false);
-  const [users, setUsers] = useState<UserTalent[]>([]);
-
-  const [nameInput, setNameInput] = useState("");
-  const [categoryInput, setCategoryInput] = useState("");
-  const [cityInput, setCityInput] = useState("");
-  const [genderInput, setGenderInput] = useState("");
-  const [minAgeInput, setMinAgeInput] = useState("");
-  const [maxAgeInput, setMaxAgeInput] = useState("");
-
-  const [searchName, setSearchName] = useState("");
-  const [searchCategory, setSearchCategory] = useState("");
-  const [searchCity, setSearchCity] = useState("");
-  const [searchGender, setSearchGender] = useState("");
-  const [searchMinAge, setSearchMinAge] = useState("");
-  const [searchMaxAge, setSearchMaxAge] = useState("");
-
-  const [searched, setSearched] = useState(false);
+  const [talent, setTalent] = useState<TalentData | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
         router.push("/auth/login");
         return;
       }
 
       try {
-        const companySnap = await getDoc(doc(db, "companies", user.uid));
+        const companySnap = await getDoc(doc(db, "companies", currentUser.uid));
 
         if (!companySnap.exists()) {
           router.push("/dashboard/company");
           return;
         }
 
-        const companyData = companySnap.data();
-        const active =
-          companyData.subscriptionStatus === "active" ||
-          companyData.subscriptionPlan === "pro";
+        const talentRef = doc(db, "users", talentId);
+        const talentSnap = await getDoc(talentRef);
 
-        setSubscribed(active);
-
-        if (active) {
-          const usersSnap = await getDocs(collection(db, "users"));
-
-          const usersData: UserTalent[] = usersSnap.docs.map((docItem) => {
-            const data = docItem.data();
-
-            // دعم المستخدمين الجدد والقدامى
-            let normalizedAge: number | undefined = undefined;
-            if (typeof data.age === "number") {
-              normalizedAge = data.age;
-            } else if (typeof data.age === "string" && data.age.trim() !== "") {
-              normalizedAge = Number(data.age);
-            }
-
-            let normalizedCategories: string[] = [];
-            if (Array.isArray(data.categories)) {
-              normalizedCategories = data.categories;
-            } else if (typeof data.category === "string" && data.category) {
-              normalizedCategories = [data.category];
-            }
-
-            return {
-              id: docItem.id,
-              fullName: data.fullName || "",
-              email: data.email || "",
-              phone: data.phone || "",
-              city: data.city || "",
-              age: normalizedAge,
-              gender: data.gender || "",
-              nationality: data.nationality || "",
-              experience: data.experience || "",
-              categories: normalizedCategories,
-              profileImageUrl: data.profileImageUrl || data.photoURL || "",
-            };
-          });
-
-          setUsers(usersData);
+        if (!talentSnap.exists()) {
+          alert("هذا الملف غير موجود");
+          router.push("/company/search");
+          return;
         }
+
+        const data = talentSnap.data();
+
+        setTalent({
+          fullName: data.fullName || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          city: data.city || "",
+          age:
+            typeof data.age === "number"
+              ? data.age
+              : data.age
+              ? Number(data.age)
+              : undefined,
+          gender: data.gender || "",
+          nationality: data.nationality || "",
+          experience: data.experience || "",
+          categories: Array.isArray(data.categories)
+            ? data.categories
+            : data.category
+            ? [data.category]
+            : [],
+          profileImageUrl: data.profileImageUrl || "",
+          photoURL: data.photoURL || "",
+          views: data.views || 0,
+          likes: data.likes || 0,
+          rating: data.rating || "0 / 5",
+        });
+
+        await updateDoc(talentRef, {
+          views: increment(1),
+        });
       } catch (error) {
-        console.error("Search Error:", error);
+        console.error("Talent profile error:", error);
+        alert("تعذر فتح الملف الشخصي");
+        router.push("/company/search");
       } finally {
         setLoading(false);
       }
     });
 
     return () => unsub();
-  }, [router]);
+  }, [router, talentId]);
 
-  const handleSearch = () => {
-    setSearchName(nameInput);
-    setSearchCategory(categoryInput);
-    setSearchCity(cityInput);
-    setSearchGender(genderInput);
-    setSearchMinAge(minAgeInput);
-    setSearchMaxAge(maxAgeInput);
-    setSearched(true);
+  const handleLike = async () => {
+    if (!talentId) return;
+
+    try {
+      await updateDoc(doc(db, "users", talentId), {
+        likes: increment(1),
+      });
+
+      setTalent((prev) => ({
+        ...prev,
+        likes: (prev?.likes || 0) + 1,
+      }));
+    } catch (error) {
+      console.error("Like error:", error);
+    }
   };
-
-  const handleReset = () => {
-    setNameInput("");
-    setCategoryInput("");
-    setCityInput("");
-    setGenderInput("");
-    setMinAgeInput("");
-    setMaxAgeInput("");
-
-    setSearchName("");
-    setSearchCategory("");
-    setSearchCity("");
-    setSearchGender("");
-    setSearchMinAge("");
-    setSearchMaxAge("");
-
-    setSearched(false);
-  };
-
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesName =
-        !searchName ||
-        user.fullName?.toLowerCase().includes(searchName.toLowerCase());
-
-      const matchesCategory =
-        !searchCategory ||
-        (user.categories || []).includes(searchCategory);
-
-      const matchesCity = !searchCity || user.city === searchCity;
-      const matchesGender = !searchGender || user.gender === searchGender;
-
-      const minAge = searchMinAge ? Number(searchMinAge) : null;
-      const maxAge = searchMaxAge ? Number(searchMaxAge) : null;
-
-      const matchesMinAge =
-        minAge === null || (typeof user.age === "number" && user.age >= minAge);
-
-      const matchesMaxAge =
-        maxAge === null || (typeof user.age === "number" && user.age <= maxAge);
-
-      return (
-        matchesName &&
-        matchesCategory &&
-        matchesCity &&
-        matchesGender &&
-        matchesMinAge &&
-        matchesMaxAge
-      );
-    });
-  }, [
-    users,
-    searchName,
-    searchCategory,
-    searchCity,
-    searchGender,
-    searchMinAge,
-    searchMaxAge,
-  ]);
 
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-100">
         <Navbar />
         <div className="mx-auto max-w-6xl px-6 py-12 text-center text-slate-600">
-          جاري تحميل المواهب...
+          جاري تحميل الملف...
         </div>
       </main>
     );
   }
 
-  if (!subscribed) {
+  if (!talent) {
     return (
       <main className="min-h-screen bg-slate-100">
         <Navbar />
-        <section className="mx-auto max-w-4xl px-6 py-14 text-center">
-          <h1 className="mb-4 text-3xl font-black">البحث غير متاح</h1>
-          <p className="mb-6 text-slate-600">
-            يجب الاشتراك لتفعيل البحث عن المواهب
-          </p>
-
-          <button
-            onClick={() => router.push("/company/subscription")}
-            className="rounded-xl bg-black px-6 py-3 text-white"
-          >
-            الاشتراك الآن
-          </button>
-        </section>
+        <div className="mx-auto max-w-4xl px-6 py-14 text-center text-slate-600">
+          هذا الملف غير موجود
+        </div>
       </main>
     );
   }
@@ -262,167 +142,106 @@ export default function CompanySearchPage() {
     <main className="min-h-screen bg-slate-100">
       <Navbar />
 
-      <section className="mx-auto max-w-7xl px-6 py-10">
-        <h1 className="mb-6 text-3xl font-black">البحث عن المواهب</h1>
+      <section className="mx-auto max-w-6xl px-6 py-10">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+            <div className="flex flex-col items-center text-center">
+              {talent.profileImageUrl || talent.photoURL ? (
+                <img
+                  src={talent.profileImageUrl || talent.photoURL}
+                  alt={talent.fullName || "Talent"}
+                  className="h-40 w-40 rounded-full object-cover ring-4 ring-slate-100"
+                />
+              ) : (
+                <div className="flex h-40 w-40 items-center justify-center rounded-full bg-slate-200 text-5xl">
+                  👤
+                </div>
+              )}
 
-        <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-            <input
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              placeholder="ابحث بالاسم"
-              className="rounded-xl border p-3"
-            />
+              <h1 className="mt-5 text-3xl font-black text-slate-950">
+                {talent.fullName || "مستخدم"}
+              </h1>
 
-            <select
-              value={categoryInput}
-              onChange={(e) => setCategoryInput(e.target.value)}
-              className="rounded-xl border p-3"
-            >
-              <option value="">كل الفئات</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+              <p className="mt-2 text-slate-600">
+                {(talent.categories ?? []).length > 0
+                  ? (talent.categories ?? []).join(" • ")
+                  : "غير محدد"}
+              </p>
 
-            <select
-              value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
-              className="rounded-xl border p-3"
-            >
-              <option value="">كل المدن</option>
-              {saudiCities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
+              <div className="mt-6 grid w-full grid-cols-3 gap-3">
+                <MiniStat label="المشاهدات" value={String(talent.views || 0)} />
+                <MiniStat label="الإعجابات" value={String(talent.likes || 0)} />
+                <MiniStat label="التقييم" value={talent.rating || "0 / 5"} />
+              </div>
 
-            <select
-              value={genderInput}
-              onChange={(e) => setGenderInput(e.target.value)}
-              className="rounded-xl border p-3"
-            >
-              <option value="">كل الأجناس</option>
-              <option value="ذكر">ذكر</option>
-              <option value="أنثى">أنثى</option>
-            </select>
-
-            <select
-              value={minAgeInput}
-              onChange={(e) => setMinAgeInput(e.target.value)}
-              className="rounded-xl border p-3"
-            >
-              <option value="">من عمر</option>
-              {ages.map((age) => (
-                <option key={age} value={age}>
-                  {age}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={maxAgeInput}
-              onChange={(e) => setMaxAgeInput(e.target.value)}
-              className="rounded-xl border p-3"
-            >
-              <option value="">إلى عمر</option>
-              {ages.map((age) => (
-                <option key={age} value={age}>
-                  {age}
-                </option>
-              ))}
-            </select>
+              <button
+                onClick={handleLike}
+                className="mt-6 rounded-2xl bg-slate-950 px-6 py-3 font-bold text-white hover:bg-slate-800"
+              >
+                إعجاب
+              </button>
+            </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              onClick={handleSearch}
-              className="rounded-xl bg-slate-950 px-6 py-3 font-bold text-white hover:bg-slate-800"
-            >
-              بحث
-            </button>
+          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
+            <p className="text-sm font-bold text-blue-700">ملف الموهبة</p>
+            <h2 className="mt-3 text-3xl font-black text-slate-950">
+              المعلومات الأساسية
+            </h2>
 
-            <button
-              onClick={handleReset}
-              className="rounded-xl border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 hover:bg-slate-50"
-            >
-              إعادة تعيين
-            </button>
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <InfoCard label="الاسم الكامل" value={talent.fullName} />
+              <InfoCard label="البريد الإلكتروني" value={talent.email} />
+              <InfoCard label="رقم الجوال" value={talent.phone} />
+              <InfoCard label="المدينة" value={talent.city} />
+              <InfoCard label="العمر" value={talent.age} />
+              <InfoCard label="الجنس" value={talent.gender} />
+              <InfoCard label="الجنسية" value={talent.nationality} />
+              <InfoCard
+                label="الفئات"
+                value={
+                  (talent.categories ?? []).length > 0
+                    ? (talent.categories ?? []).join(" • ")
+                    : "غير مضاف"
+                }
+              />
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-sm font-bold text-slate-500">الخبرة / النبذة</p>
+              <p className="mt-2 leading-8 text-slate-800">
+                {talent.experience || "لا توجد نبذة حالياً"}
+              </p>
+            </div>
           </div>
         </div>
-
-        {!searched ? (
-          <div className="rounded-2xl bg-white p-8 text-center text-slate-600 shadow-sm ring-1 ring-slate-200">
-            اختر الفلاتر ثم اضغط على <span className="font-bold">بحث</span>.
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="rounded-2xl bg-white p-6 shadow"
-                >
-                  <div className="mb-4 flex items-center gap-4">
-                    {user.profileImageUrl ? (
-                      <img
-                        src={user.profileImageUrl}
-                        alt={user.fullName || "Talent"}
-                        className="h-16 w-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-2xl">
-                        👤
-                      </div>
-                    )}
-
-                    <div>
-                      <h2 className="text-xl font-bold">
-                        {user.fullName || "مستخدم"}
-                      </h2>
-                      <p className="text-sm text-slate-500">
-                        {(user.categories || []).length > 0
-                          ? user.categories?.join(" • ")
-                          : "غير محدد"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p>📍 {user.city || "غير محدد"}</p>
-                  <p>👤 {user.gender || "-"}</p>
-                  <p>🎂 {user.age || "-"}</p>
-
-                  <div className="mt-4">
-                    <p className="text-sm text-gray-500">الخبرة / النبذة</p>
-                    <p>{user.experience || "لا يوجد"}</p>
-                  </div>
-
-                  <div className="mt-4 text-sm">
-                    <p>{user.email || "لا يوجد بريد"}</p>
-                    <p>{user.phone || "لا يوجد رقم"}</p>
-                  </div>
-
-                  <div className="mt-5">
-                    <Link
-                      href={`/company/talent/${user.id}`}
-                      className="inline-block rounded-xl bg-slate-950 px-5 py-3 font-bold text-white hover:bg-slate-800"
-                    >
-                      عرض الملف
-                    </Link>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-3 rounded-2xl bg-white p-8 text-center text-gray-500 shadow-sm ring-1 ring-slate-200">
-                لا يوجد نتائج مطابقة
-              </div>
-            )}
-          </div>
-        )}
       </section>
     </main>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function InfoCard({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <p className="text-sm font-bold text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-slate-900">
+        {value || "غير مضاف"}
+      </p>
+    </div>
   );
 }
