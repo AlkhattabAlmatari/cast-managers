@@ -115,11 +115,19 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-2xl font-black text-slate-950">
-            كاست مانجرز
-          </Link>
-
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+              aria-label="فتح القائمة"
+            >
+              <div className="space-y-1.5">
+                <span className="block h-0.5 w-5 rounded bg-slate-900" />
+                <span className="block h-0.5 w-5 rounded bg-slate-900" />
+                <span className="block h-0.5 w-5 rounded bg-slate-900" />
+              </div>
+            </button>
+
             {!loadingRole && role === "guest" ? (
               <div className="hidden items-center gap-3 md:flex">
                 <Link
@@ -136,19 +144,11 @@ export default function Navbar() {
                 </Link>
               </div>
             ) : null}
-
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
-              aria-label="فتح القائمة"
-            >
-              <div className="space-y-1.5">
-                <span className="block h-0.5 w-5 rounded bg-slate-900" />
-                <span className="block h-0.5 w-5 rounded bg-slate-900" />
-                <span className="block h-0.5 w-5 rounded bg-slate-900" />
-              </div>
-            </button>
           </div>
+
+          <Link href="/" className="text-2xl font-black text-slate-950">
+            كاست مانجرز
+          </Link>
         </div>
       </header>
 
@@ -160,7 +160,7 @@ export default function Navbar() {
             aria-label="إغلاق القائمة"
           />
 
-          <aside className="absolute right-0 top-0 h-full w-[320px] max-w-[88vw] bg-white shadow-2xl">
+          <aside className="absolute left-0 top-0 h-full w-[320px] max-w-[88vw] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
                 <p className="text-sm font-bold text-blue-700">القائمة</p>
