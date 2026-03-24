@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/lib/firebase";
@@ -97,7 +97,8 @@ export default function CompanySearchPage() {
       }
 
       try {
-        const companySnap = await getDoc(doc(db, "companies", user.uid));
+        const companyRef = doc(db, "companies", user.uid);
+        const companySnap = await getDoc(companyRef);
 
         if (!companySnap.exists()) {
           router.push("/dashboard/company");
@@ -106,11 +107,24 @@ export default function CompanySearchPage() {
 
         const companyData = companySnap.data();
 
-        const active =
+        let active =
           companyData.subscriptionStatus === "active" ||
           companyData.subscriptionPlan === "pro";
 
         const isVerified = companyData.verificationStatus === "approved";
+
+        if (
+          active &&
+          companyData.subscriptionEndsAt &&
+          new Date(companyData.subscriptionEndsAt).getTime() < Date.now()
+        ) {
+          await updateDoc(companyRef, {
+            subscriptionStatus: "inactive",
+            subscriptionPlan: "free",
+          });
+
+          active = false;
+        }
 
         setSubscribed(active);
         setVerified(isVerified);

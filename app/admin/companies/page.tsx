@@ -26,6 +26,8 @@ type CompanyItem = {
   isVerified?: boolean;
   subscriptionStatus?: string;
   subscriptionPlan?: string;
+  subscriptionStartedAt?: string;
+  subscriptionEndsAt?: string;
   createdAt?: string;
 };
 
@@ -110,9 +112,15 @@ export default function AdminCompaniesPage() {
   };
 
   const activateSubscription = async (companyId: string) => {
+    const startedAt = new Date();
+    const endsAt = new Date();
+    endsAt.setDate(endsAt.getDate() + 30);
+
     await updateCompany(companyId, {
       subscriptionStatus: "active",
       subscriptionPlan: "pro",
+      subscriptionStartedAt: startedAt.toISOString(),
+      subscriptionEndsAt: endsAt.toISOString(),
     });
   };
 
@@ -120,6 +128,8 @@ export default function AdminCompaniesPage() {
     await updateCompany(companyId, {
       subscriptionStatus: "inactive",
       subscriptionPlan: "free",
+      subscriptionStartedAt: "",
+      subscriptionEndsAt: "",
     });
   };
 
@@ -159,7 +169,7 @@ export default function AdminCompaniesPage() {
             إدارة الشركات
           </h1>
           <p className="mt-3 text-slate-600">
-            من هنا تراجع الشركات وتوثقها وتفعل الاشتراك.
+            من هنا تراجع الشركات وتوثقها وتفعل الاشتراك لمدة 30 يوم.
           </p>
         </div>
 
@@ -194,6 +204,14 @@ export default function AdminCompaniesPage() {
                         label="الاشتراك"
                         value={company.subscriptionStatus}
                       />
+                      <InfoRow
+                        label="بداية الاشتراك"
+                        value={formatDate(company.subscriptionStartedAt)}
+                      />
+                      <InfoRow
+                        label="نهاية الاشتراك"
+                        value={formatDate(company.subscriptionEndsAt)}
+                      />
                     </div>
                   </div>
 
@@ -224,7 +242,7 @@ export default function AdminCompaniesPage() {
                         disabled={savingId === company.id}
                         className="w-full rounded-2xl bg-slate-950 px-4 py-3 font-bold text-white hover:bg-slate-800 disabled:opacity-60"
                       >
-                        تفعيل الاشتراك 159
+                        تفعيل اشتراك 30 يوم
                       </button>
 
                       <button
@@ -265,4 +283,13 @@ function InfoRow({
       </p>
     </div>
   );
+}
+
+function formatDate(value?: string) {
+  if (!value) return "غير مضاف";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "غير مضاف";
+
+  return date.toLocaleDateString("ar-SA");
 }

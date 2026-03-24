@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/lib/firebase";
@@ -18,6 +18,8 @@ type CompanyData = {
   verificationStatus?: "pending" | "approved" | "rejected";
   commercialNumber?: string;
   sector?: string;
+  subscriptionStartedAt?: string;
+  subscriptionEndsAt?: string;
 };
 
 export default function CompanyDashboardPage() {
@@ -33,14 +35,31 @@ export default function CompanyDashboardPage() {
       }
 
       try {
-        const snap = await getDoc(doc(db, "companies", currentUser.uid));
+        const ref = doc(db, "companies", currentUser.uid);
+        const snap = await getDoc(ref);
 
         if (!snap.exists()) {
           router.push("/auth/signup-company");
           return;
         }
 
-        setCompanyData(snap.data() as CompanyData);
+        const data = snap.data() as CompanyData;
+
+        if (
+          data.subscriptionStatus === "active" &&
+          data.subscriptionEndsAt &&
+          new Date(data.subscriptionEndsAt).getTime() < Date.now()
+        ) {
+          await updateDoc(ref, {
+            subscriptionStatus: "inactive",
+            subscriptionPlan: "free",
+          });
+
+          data.subscriptionStatus = "inactive";
+          data.subscriptionPlan = "free";
+        }
+
+        setCompanyData(data);
       } catch (error) {
         console.error(error);
       } finally {
@@ -97,6 +116,25 @@ export default function CompanyDashboardPage() {
           </div>
         </div>
 
+        <div className="mt-6 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+          <h2 className="text-2xl font-black text-slate-950">معلومات الاشتراك</h2>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <InfoCard
+              label="حالة الاشتراك"
+              value={companyData?.subscriptionStatus || "inactive"}
+            />
+            <InfoCard
+              label="تاريخ البداية"
+              value={formatDate(companyData?.subscriptionStartedAt)}
+            />
+            <InfoCard
+              label="تاريخ النهاية"
+              value={formatDate(companyData?.subscriptionEndsAt)}
+            />
+          </div>
+        </div>
+
         {companyData?.verificationStatus !== "approved" ? (
           <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
             <h2 className="text-xl font-black">حالة التحقق</h2>
@@ -142,13 +180,13 @@ export default function CompanyDashboardPage() {
             <h2 className="text-2xl font-black text-slate-950">آخر التحديثات</h2>
             <div className="mt-6 space-y-4 text-slate-600">
               <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                تم تنظيم حساب الشركة ليكون معتمدًا على حالة التحقق.
+                الاشتراك الآن مربوط بتاريخ بداية ونهاية.
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                لن يعمل البحث عن المواهب حتى تصبح الشركة موثقة.
+                إذا انتهت المدة، يتم إيقاف الاشتراك تلقائيًا عند الدخول.
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                يمكنك تعديل بيانات الشركة من القائمة الجانبية.
+                يمكنك تفعيل الاشتراك يدويًا من لوحة الأدمن لمدة 30 يوم.
               </div>
             </div>
           </div>
@@ -165,4 +203,22 @@ function StatCard({ label, value }: { label: string; value: string }) {
       <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
     </div>
   );
+}
+
+function InfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <p className="text-sm font-bold text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function formatDate(value?: string) {
+  if (!value) return "غير مضاف";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "غير مضاف";
+
+  return date.toLocaleDateString("ar-SA");
 }
