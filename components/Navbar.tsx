@@ -114,7 +114,11 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/85 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-7xl flex-row-reverse items-center justify-between px-6 py-4">
+          <Link href="/" className="text-2xl font-black text-slate-950">
+            كاست مانجرز
+          </Link>
+
           <button
             onClick={() => setDrawerOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
@@ -126,10 +130,6 @@ export default function Navbar() {
               <span className="block h-0.5 w-5 rounded bg-slate-900" />
             </div>
           </button>
-
-          <Link href="/" className="text-2xl font-black text-slate-950">
-            كاست مانجرز
-          </Link>
         </div>
       </header>
 
