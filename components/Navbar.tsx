@@ -130,8 +130,6 @@ export default function Navbar() {
           <Link href="/" className="text-2xl font-black text-slate-950">
             كاست مانجرز
           </Link>
-
-          <div className="w-11" />
         </div>
       </header>
 
