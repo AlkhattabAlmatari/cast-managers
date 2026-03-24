@@ -3,22 +3,44 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "@/lib/firebase";
+import { saudiCities } from "@/lib/userOptions";
+
+const sectorOptions = [
+  "إنتاج إعلامي",
+  "إعلانات وتسويق",
+  "تنظيم فعاليات",
+  "إدارة مواهب",
+  "تصوير وإخراج",
+  "محتوى رقمي",
+  "علاقات عامة",
+  "خدمات فنية",
+  "أخرى",
+];
 
 export default function SignupCompanyForm() {
   const router = useRouter();
 
   const [companyName, setCompanyName] = useState("");
-  const [contactName, setContactName] = useState("");
+  const [managerName, setManagerName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [sector, setSector] = useState("");
-  const [commercialRegistration, setCommercialRegistration] = useState("");
+  const [commercialNumber, setCommercialNumber] = useState("");
+  const [website, setWebsite] = useState("");
+  const [about, setAbout] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleGoogleCompanySignup = async () => {
-    if (!companyName || !contactName || !phone || !city) {
+  const handleSignup = async () => {
+    if (
+      !companyName ||
+      !managerName ||
+      !phone ||
+      !city ||
+      !sector ||
+      !commercialNumber
+    ) {
       alert("أكمل جميع البيانات المطلوبة أولاً");
       return;
     }
@@ -32,9 +54,7 @@ export default function SignupCompanyForm() {
       const companyRef = doc(db, "companies", user.uid);
       const userRef = doc(db, "users", user.uid);
 
-      const existingCompany = await getDoc(companyRef);
       const existingUser = await getDoc(userRef);
-
       if (existingUser.exists()) {
         alert("هذا الحساب مسجل كمستخدم بالفعل");
         setLoading(false);
@@ -46,29 +66,27 @@ export default function SignupCompanyForm() {
         {
           role: "company",
           companyName,
-          contactName,
+          managerName,
           phone,
           city,
           sector,
-          commercialRegistration,
+          commercialNumber,
+          website,
+          about,
           email: user.email || "",
-          photoURL: user.photoURL || "",
-          status: "pending",
+          subscriptionPlan: "free",
           subscriptionStatus: "inactive",
-          subscriptionPlan: "none",
-          verified: false,
+          verificationStatus: "pending",
+          isVerified: false,
           createdAt: new Date().toISOString(),
         },
         { merge: true }
       );
 
-      if (!existingCompany.exists()) {
-        alert("تم إنشاء حساب الشركة بنجاح");
-      }
-
+      alert("تم إنشاء حساب الشركة بنجاح وهو الآن بانتظار التحقق");
       router.push("/dashboard/company");
     } catch (error: any) {
-      alert(error.message || "تعذر إنشاء حساب الشركة عبر Google");
+      alert(error.message || "تعذر إنشاء حساب الشركة");
     } finally {
       setLoading(false);
     }
@@ -79,7 +97,7 @@ export default function SignupCompanyForm() {
       <div className="mb-6">
         <h2 className="text-3xl font-black text-slate-950">تسجيل شركة</h2>
         <p className="mt-3 text-slate-600">
-          أكمل بيانات الشركة ثم أنشئ الحساب باستخدام Google
+          أدخل بيانات الشركة، وبعد التسجيل يتم مراجعة الحساب قبل التفعيل الكامل.
         </p>
       </div>
 
@@ -93,9 +111,9 @@ export default function SignupCompanyForm() {
 
         <input
           className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-          placeholder="اسم المسؤول"
-          value={contactName}
-          onChange={(e) => setContactName(e.target.value)}
+          placeholder="اسم المدير المسؤول"
+          value={managerName}
+          onChange={(e) => setManagerName(e.target.value)}
         />
 
         <input
@@ -111,35 +129,58 @@ export default function SignupCompanyForm() {
           onChange={(e) => setCity(e.target.value)}
         >
           <option value="">اختر المدينة</option>
-          <option>الرياض</option>
-          <option>جدة</option>
-          <option>الدمام</option>
-          <option>الخبر</option>
-          <option>مكة المكرمة</option>
-          <option>المدينة المنورة</option>
-          <option>الطائف</option>
+          {saudiCities.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+          value={sector}
+          onChange={(e) => setSector(e.target.value)}
+        >
+          <option value="">اختر القطاع</option>
+          {sectorOptions.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
         </select>
 
         <input
           className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-          placeholder="القطاع"
-          value={sector}
-          onChange={(e) => setSector(e.target.value)}
+          placeholder="رقم السجل التجاري"
+          value={commercialNumber}
+          onChange={(e) => setCommercialNumber(e.target.value)}
         />
 
         <input
           className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-          placeholder="السجل التجاري"
-          value={commercialRegistration}
-          onChange={(e) => setCommercialRegistration(e.target.value)}
+          placeholder="الموقع الإلكتروني أو رابط معروف (اختياري)"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
         />
 
+        <textarea
+          className="min-h-28 w-full rounded-2xl border border-slate-300 px-4 py-3"
+          placeholder="نبذة عن الشركة"
+          value={about}
+          onChange={(e) => setAbout(e.target.value)}
+        />
+
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          بعد التسجيل ستكون حالة الشركة <span className="font-bold">قيد المراجعة</span>
+          ، ولن يتفعل البحث عن المواهب إلا بعد التحقق والموافقة.
+        </div>
+
         <button
-          onClick={handleGoogleCompanySignup}
+          onClick={handleSignup}
           disabled={loading}
-          className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-lg font-extrabold text-white hover:bg-slate-800"
+          className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-lg font-extrabold text-white hover:bg-slate-800 disabled:opacity-60"
         >
-          {loading ? "جاري الإنشاء..." : "إنشاء حساب شركة باستخدام Google"}
+          {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب شركة باستخدام Google"}
         </button>
       </div>
     </div>

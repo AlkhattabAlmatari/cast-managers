@@ -14,6 +14,10 @@ type CompanyData = {
   phone?: string;
   email?: string;
   subscriptionPlan?: string;
+  subscriptionStatus?: string;
+  verificationStatus?: "pending" | "approved" | "rejected";
+  commercialNumber?: string;
+  sector?: string;
 };
 
 export default function CompanyDashboardPage() {
@@ -58,6 +62,13 @@ export default function CompanyDashboardPage() {
     );
   }
 
+  const verificationLabel =
+    companyData?.verificationStatus === "approved"
+      ? "موثقة"
+      : companyData?.verificationStatus === "rejected"
+      ? "مرفوضة"
+      : "قيد المراجعة";
+
   return (
     <main className="min-h-screen bg-slate-100">
       <Navbar />
@@ -69,10 +80,10 @@ export default function CompanyDashboardPage() {
             أهلاً {companyData?.companyName || "بشركتك"}
           </h1>
           <p className="mt-3 text-slate-600">
-            من هنا تتابع بيانات الشركة والاشتراك والبحث عن المواهب.
+            من هنا تتابع بيانات الشركة والاشتراك وحالة التحقق.
           </p>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-4">
             <StatCard label="المدينة" value={companyData?.city || "غير محدد"} />
             <StatCard
               label="مدير الحساب"
@@ -82,8 +93,19 @@ export default function CompanyDashboardPage() {
               label="الاشتراك"
               value={companyData?.subscriptionPlan || "غير مشترك"}
             />
+            <StatCard label="التحقق" value={verificationLabel} />
           </div>
         </div>
+
+        {companyData?.verificationStatus !== "approved" ? (
+          <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900 shadow-sm">
+            <h2 className="text-xl font-black">حالة التحقق</h2>
+            <p className="mt-3 leading-8">
+              حساب الشركة الآن <span className="font-bold">{verificationLabel}</span>.
+              لن تتفعل ميزة البحث عن المواهب إلا بعد الموافقة على التحقق.
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
@@ -105,6 +127,14 @@ export default function CompanyDashboardPage() {
                 <span className="font-bold">المدينة:</span>{" "}
                 {companyData?.city || "غير محدد"}
               </p>
+              <p>
+                <span className="font-bold">القطاع:</span>{" "}
+                {companyData?.sector || "غير محدد"}
+              </p>
+              <p>
+                <span className="font-bold">السجل التجاري:</span>{" "}
+                {companyData?.commercialNumber || "غير مضاف"}
+              </p>
             </div>
           </div>
 
@@ -112,13 +142,13 @@ export default function CompanyDashboardPage() {
             <h2 className="text-2xl font-black text-slate-950">آخر التحديثات</h2>
             <div className="mt-6 space-y-4 text-slate-600">
               <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                يمكنك الآن فتح القائمة الجانبية من زر الثلاث خطوط.
+                تم تنظيم حساب الشركة ليكون معتمدًا على حالة التحقق.
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                تم تنظيم الوصول إلى البحث عن المواهب وتعديل بيانات الشركة.
+                لن يعمل البحث عن المواهب حتى تصبح الشركة موثقة.
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                الاشتراك والتنقلات أصبحت مرتبة داخل القائمة الجانبية.
+                يمكنك تعديل بيانات الشركة من القائمة الجانبية.
               </div>
             </div>
           </div>

@@ -16,10 +16,11 @@ type UserTalent = {
   age?: number;
   gender?: string;
   nationality?: string;
+  heightCm?: number;
+  weightKg?: number;
   experience?: string;
   categories?: string[];
   photoURL?: string;
-  profileImageUrl?: string;
 };
 
 const saudiCities = [
@@ -69,6 +70,7 @@ export default function CompanySearchPage() {
 
   const [loading, setLoading] = useState(true);
   const [subscribed, setSubscribed] = useState(false);
+  const [verified, setVerified] = useState(false);
   const [users, setUsers] = useState<UserTalent[]>([]);
 
   const [nameInput, setNameInput] = useState("");
@@ -103,31 +105,21 @@ export default function CompanySearchPage() {
         }
 
         const companyData = companySnap.data();
+
         const active =
           companyData.subscriptionStatus === "active" ||
           companyData.subscriptionPlan === "pro";
 
-        setSubscribed(active);
+        const isVerified = companyData.verificationStatus === "approved";
 
-        if (active) {
+        setSubscribed(active);
+        setVerified(isVerified);
+
+        if (active && isVerified) {
           const usersSnap = await getDocs(collection(db, "users"));
 
           const usersData: UserTalent[] = usersSnap.docs.map((docItem) => {
             const data = docItem.data();
-
-            let normalizedAge: number | undefined = undefined;
-            if (typeof data.age === "number") {
-              normalizedAge = data.age;
-            } else if (typeof data.age === "string" && data.age.trim() !== "") {
-              normalizedAge = Number(data.age);
-            }
-
-            let normalizedCategories: string[] = [];
-            if (Array.isArray(data.categories)) {
-              normalizedCategories = data.categories;
-            } else if (typeof data.category === "string" && data.category) {
-              normalizedCategories = [data.category];
-            }
 
             return {
               id: docItem.id,
@@ -135,12 +127,28 @@ export default function CompanySearchPage() {
               email: data.email || "",
               phone: data.phone || "",
               city: data.city || "",
-              age: normalizedAge,
+              age:
+                typeof data.age === "number"
+                  ? data.age
+                  : data.age
+                  ? Number(data.age)
+                  : undefined,
               gender: data.gender || "",
               nationality: data.nationality || "",
+              heightCm:
+                typeof data.heightCm === "number"
+                  ? data.heightCm
+                  : data.heightCm
+                  ? Number(data.heightCm)
+                  : undefined,
+              weightKg:
+                typeof data.weightKg === "number"
+                  ? data.weightKg
+                  : data.weightKg
+                  ? Number(data.weightKg)
+                  : undefined,
               experience: data.experience || "",
-              categories: normalizedCategories,
-              profileImageUrl: data.profileImageUrl || "",
+              categories: Array.isArray(data.categories) ? data.categories : [],
               photoURL: data.photoURL || "",
             };
           });
@@ -230,8 +238,22 @@ export default function CompanySearchPage() {
       <main className="min-h-screen bg-slate-100">
         <Navbar />
         <div className="mx-auto max-w-6xl px-6 py-12 text-center text-slate-600">
-          جاري تحميل المواهب...
+          جاري تحميل البحث...
         </div>
+      </main>
+    );
+  }
+
+  if (!verified) {
+    return (
+      <main className="min-h-screen bg-slate-100">
+        <Navbar />
+        <section className="mx-auto max-w-4xl px-6 py-14 text-center">
+          <h1 className="mb-4 text-3xl font-black">الشركة غير موثقة بعد</h1>
+          <p className="mb-6 text-slate-600">
+            يجب اعتماد الشركة أولًا قبل تفعيل البحث عن المواهب.
+          </p>
+        </section>
       </main>
     );
   }
@@ -361,14 +383,11 @@ export default function CompanySearchPage() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="rounded-2xl bg-white p-6 shadow"
-                >
+                <div key={user.id} className="rounded-2xl bg-white p-6 shadow">
                   <div className="mb-4 flex items-center gap-4">
-                    {user.profileImageUrl || user.photoURL ? (
+                    {user.photoURL ? (
                       <img
-                        src={user.profileImageUrl || user.photoURL}
+                        src={user.photoURL}
                         alt={user.fullName || "Talent"}
                         className="h-16 w-16 rounded-full object-cover"
                       />
