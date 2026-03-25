@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "كاست مانجرز",
-  description: "منصة سعودية تربط بين الشركات والمواهب",
+  title: "كاست مانجرز | منصة تربط الشركات بالمواهب",
+  description:
+    "كاست مانجرز منصة سعودية تربط بين الشركات والمواهب بشكل حديث وعملي داخل السوق السعودي.",
 };
 
 export default function RootLayout({
