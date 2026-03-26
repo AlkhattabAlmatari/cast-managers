@@ -5,115 +5,116 @@ import MotionSection from "@/components/MotionSection";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
+    <main className="relative min-h-screen overflow-hidden bg-slate-100 text-slate-900">
       <Navbar />
+      <FloatingWorkBackground />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <FloatingWorkBackground />
+      <section className="relative z-10 mx-auto flex min-h-[calc(100vh-88px)] max-w-7xl items-center px-6">
+        <div className="grid w-full items-center gap-10 lg:grid-cols-2">
+          <div className="space-y-6">
+            <span className="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+              منصة احترافية للسوق السعودي
+            </span>
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(100vh-88px)] max-w-7xl items-center px-6">
-          <div className="grid w-full items-center gap-10 lg:grid-cols-2">
-            <div className="space-y-6">
-              <span className="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
-                منصة احترافية للسوق السعودي
-              </span>
+            <h2 className="text-5xl font-black leading-tight text-slate-950">
+              منصة تربط بين
+              <span className="block text-blue-700">الشركات والمواهب</span>
+              بشكل حديث وعملي
+            </h2>
 
-              <h2 className="text-5xl font-black leading-tight text-slate-950">
-                منصة تربط بين
-                <span className="block text-blue-700">الشركات والمواهب</span>
-                بشكل حديث وعملي
-              </h2>
+            <p className="max-w-xl text-lg leading-8 text-slate-600">
+              كاست مانجرز منصة تساعد المستخدمين على إنشاء ملفاتهم الشخصية بشكل
+              احترافي، وتساعد الشركات على الوصول إلى المواهب المناسبة بسرعة
+              ووضوح داخل السوق السعودي.
+            </p>
 
-              <p className="max-w-xl text-lg leading-8 text-slate-600">
-                كاست مانجرز منصة تساعد المستخدمين على إنشاء ملفاتهم الشخصية بشكل
-                احترافي، وتساعد الشركات على الوصول إلى المواهب المناسبة بسرعة
-                ووضوح داخل السوق السعودي.
-              </p>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/auth/signup-user"
+                className="rounded-2xl bg-slate-950 px-6 py-4 text-sm font-extrabold text-white transition hover:bg-slate-800"
+              >
+                التسجيل كمستخدم
+              </Link>
 
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  href="/auth/signup-user"
-                  className="rounded-2xl bg-slate-950 px-6 py-4 text-sm font-extrabold text-white transition hover:bg-slate-800"
-                >
-                  التسجيل كمستخدم
-                </Link>
+              <Link
+                href="/auth/signup-company"
+                className="rounded-2xl bg-slate-950 px-6 py-4 text-sm font-extrabold text-white transition hover:bg-slate-800"
+              >
+                التسجيل كشركة
+              </Link>
 
-                <Link
-                  href="/auth/signup-company"
-                  className="rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-extrabold text-slate-900 transition hover:bg-slate-50"
-                >
-                  التسجيل كشركة
-                </Link>
-              </div>
-
-              <div className="grid max-w-xl grid-cols-1 gap-4 pt-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
-                  <p className="text-2xl font-black text-slate-950">+100</p>
-                  <p className="text-sm text-slate-500">مواهب متنوعة</p>
-                </div>
-                <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
-                  <p className="text-2xl font-black text-slate-950">+25</p>
-                  <p className="text-sm text-slate-500">شركات مسجلة</p>
-                </div>
-                <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
-                  <p className="text-2xl font-black text-slate-950">24/7</p>
-                  <p className="text-sm text-slate-500">وصول مستمر</p>
-                </div>
-              </div>
+              <Link
+                href="/auth/login"
+                className="rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-extrabold text-slate-900 transition hover:bg-slate-50"
+              >
+                تسجيل الدخول
+              </Link>
             </div>
 
-            <div className="relative z-10">
-              <div className="rounded-[32px] border border-white/30 bg-white/70 p-6 shadow-2xl backdrop-blur">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="h-3 w-3 rounded-full bg-red-400" />
-                  <div className="h-3 w-3 rounded-full bg-yellow-400" />
-                  <div className="h-3 w-3 rounded-full bg-green-400" />
+            <div className="grid max-w-xl grid-cols-1 gap-4 pt-4 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+                <p className="text-2xl font-black text-slate-950">+100</p>
+                <p className="text-sm text-slate-500">مواهب متنوعة</p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+                <p className="text-2xl font-black text-slate-950">+25</p>
+                <p className="text-sm text-slate-500">شركات مسجلة</p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+                <p className="text-2xl font-black text-slate-950">24/7</p>
+                <p className="text-sm text-slate-500">وصول مستمر</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="rounded-[32px] border border-white/30 bg-white/70 p-6 shadow-2xl backdrop-blur">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="h-3 w-3 rounded-full bg-red-400" />
+                <div className="h-3 w-3 rounded-full bg-yellow-400" />
+                <div className="h-3 w-3 rounded-full bg-green-400" />
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                  <p className="mb-2 text-sm font-bold text-slate-500">
+                    ملف موهبة
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-xl">
+                      🎭
+                    </div>
+                    <div>
+                      <p className="font-extrabold text-slate-900">
+                        ممثل • مقدم • موديل • منظم
+                      </p>
+                      <p className="text-sm text-slate-500">الرياض • عمر 25</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                    <p className="mb-2 text-sm font-bold text-slate-500">
-                      ملف موهبة
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-xl">
-                        🎭
-                      </div>
-                      <div>
-                        <p className="font-extrabold text-slate-900">
-                          ممثل • مقدم • موديل • منظم
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          الرياض • فئة 18-25
-                        </p>
-                      </div>
+                <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                  <p className="mb-2 text-sm font-bold text-slate-500">
+                    حساب شركة
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-xl">
+                      🏢
+                    </div>
+                    <div>
+                      <p className="font-extrabold text-slate-900">
+                        شركة إنتاج وإعلانات
+                      </p>
+                      <p className="text-sm text-slate-500">جدة • قطاع إعلامي</p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                    <p className="mb-2 text-sm font-bold text-slate-500">
-                      حساب شركة
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-xl">
-                        🏢
-                      </div>
-                      <div>
-                        <p className="font-extrabold text-slate-900">
-                          شركة إنتاج وإعلانات
-                        </p>
-                        <p className="text-sm text-slate-500">جدة • قطاع إعلامي</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-950 p-5 text-white">
-                    <p className="mb-1 text-sm text-slate-300">ميزة قوية</p>
-                    <p className="text-xl font-black">
-                      بحث ذكي حسب الفئة العمرية والمدينة ونوع الحساب
-                    </p>
-                  </div>
+                <div className="rounded-2xl bg-slate-950 p-5 text-white">
+                  <p className="mb-1 text-sm text-slate-300">ميزة قوية</p>
+                  <p className="text-xl font-black">
+                    بحث ذكي حسب الفئة والعمر والمدينة ونوع الحساب
+                  </p>
                 </div>
               </div>
             </div>
