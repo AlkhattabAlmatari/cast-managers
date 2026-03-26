@@ -146,6 +146,7 @@ a:hover {
 }
 
 .floating-work-item {
+  animation-duration: 18s;
   position: absolute;
   bottom: -120px;
   display: flex;
@@ -183,24 +184,29 @@ a:hover {
 
 @keyframes floatUpLoop {
   0% {
-    transform: translateY(0) scale(0.9);
+    transform: translate3d(0, 0, 0) scale(0.9) rotate(0deg);
     opacity: 0;
   }
 
   10% {
-    opacity: 0.35;
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translate3d(12px, -30vh, 0) scale(1) rotate(4deg);
   }
 
   50% {
-    opacity: 0.22;
+    transform: translate3d(-10px, -55vh, 0) scale(1.05) rotate(-4deg);
+    opacity: 0.35;
   }
 
-  85% {
-    opacity: 0.1;
+  75% {
+    transform: translate3d(14px, -80vh, 0) scale(1.08) rotate(5deg);
   }
 
   100% {
-    transform: translateY(-110vh) scale(1.08);
+    transform: translate3d(-8px, -115vh, 0) scale(1.1) rotate(-6deg);
     opacity: 0;
   }
 }
